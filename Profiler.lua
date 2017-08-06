@@ -1,70 +1,61 @@
--- Utility & Misc
-function p(t, depth)
-    local depth = depth or 0
-    for k,v in pairs(t) do
-        print(string.rep(" ", depth*4), k,v)
-        if type(v)=="table" then p(v, depth+1) end
-    end
-end
-
-
-
 Profiler = {}
 
+
 --
--- Find functions
+-- Auto mode
 --
 
-Known = {}
-Keys = {}
-Profiler.byAddOn = {}
+local Known = {}
+local RefersTo = {}
+local SeenFirst = {}   -- first seen during loading this addon
 
-local byAddOn = Profiler.byAddOn
+function Profiler:traverseTable(traverse, fromAddon, basePath, tableSeen)
+    -- Traverse the given table to find functions, attributing them to the given addon name
+    
+    local basePath = basePath or ""
+    local tableSeen = tableSeen or {} -- used to avoid cycles
 
-local newcount = 0
-function Profiler:traverseTable(t, addon, seen)
-    if not byAddOn[addon] then byAddOn[addon] = {} end
-    if not seen then newcount = 0 end
-    local seen = seen or {} -- avoid cycles
-    for k,v in pairs(t) do
-        local name = type(k)=="string" and k or tostring(k)
-        if type(v) == "function" then
-            if not Known[v] then
-                if name~=Known[v] then print("replaced", name) end
-                newcount = newcount + 1
-                Known[v] = name
-                From[v] = addon
-                byAddOn[addon][name] = v
+    for key,value in pairs(traverse) do
+        local name = tostring(key)
+
+        -- add any found functions
+        if type(value) == "function" then
+            local func = value
+            RefersTo[basePath..name] = func
+            if not Known[func] then
+                Known[func] = true
+                if not SeenFirst[fromAddon] then SeenFirst[fromAddon] = {} end
+                SeenFirst[fromAddon][func] = basePath..name
             end
         end
-        if type(k) == "function" then
-            if not Known[k] then
-                newcount = newcount + 1
-                Known[k] = name
-                From[k] = addon
-                byAddOn[addon][name] = k
-            end 
+        if type(key) == "function" then
+            local func = key
+            RefersTo[basePath..name] = func
+            if not Known[func] then
+                Known[func] = true
+                if not SeenFirst[fromAddon] then SeenFirst[fromAddon] = {} end
+                SeenFirst[fromAddon][func] = basePath..name
+            end
+
         end
-        if type(v) == "table" then
-            if not seen[v] then
-                seen[v] = true
-                Profiler:traverseTable(v, addon, seen)
+
+        -- recurse subtables
+        if type(value) == "table" then 
+            local tab = value
+            if not tableSeen[tab] then
+                tableSeen[tab] = true
+                Profiler:traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
             end
         end
-        if type(k) == "table" then
-            if not seen[k] then
-                seen[k] = true
-                Profiler:traverseTable(k, addon, seen)
+        if type(key) == "table" then
+            local tab = key
+            if not tableSeen[tab] then
+                tableSeen[tab] = true
+                Profiler:traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
             end
         end
+
     end
-    return newcount
-end
-
-function Profiler:RecordCurrentTimes(name)
-    -- TODO
-    -- save times
-    -- reset profiling
 end
 
 
@@ -73,6 +64,7 @@ end
 --
 -- Load addon
 --
+
 Profiler.events = {}
 Profiler.frame = CreateFrame("Frame")
 
@@ -84,21 +76,28 @@ function Profiler:Init()
             if not name=="!Profiler" then
                 print("AddOn loaded before Profiler:", name..". Functions will be misattributed to Blizzard.")
             end
+
         end
     end
 
     -- Claim our own functions, then attribute all other globals to Blizzard
-    local profiler = Profiler:traverseTable(Profiler, "Profiler")
-    local blizzard = Profiler:traverseTable(_G, "Blizzard")
-    print("Profiler loaded, registering", profiler, "own functions and", blizzard, "Blizzard functions.")
+    Profiler:traverseTable(Profiler, "Profiler")
+    Profiler:traverseTable(_G, "Blizzard")
+    local nProfiler, nBlizzard = 0, 0
+    for _ in pairs(SeenFirst["Profiler"]) do nProfiler = nProfiler + 1 end
+    for _ in pairs(SeenFirst["Blizzard"]) do nBlizzard = nBlizzard + 1 end
+
+    print("Profiler loaded, registering", nProfiler, "own functions and", nBlizzard, "Blizzard functions.")
 end
 
 function Profiler.events:ADDON_LOADED(addon)
     if addon=="!Profiler" then return Profiler:Init() end
 
-    -- assume new functions are from addon
-    local new = Profiler:traverseTable(_G, addon)
-    print("Profiler: found", new, "new functions after", addon, "loaded.")
+    -- assume new functions found are from the loaded addon
+    Profiler:traverseTable(_G, addon)
+    local nNew = 0
+    for _ in pairs(SeenFirst[addon]) do nNew = nNew + 1 end
+    print("Profiler: found", nNew, "new functions after", addon, "loaded.")
 end
 
 function Profiler.events:PLAYER_LOGIN(...)
@@ -107,7 +106,6 @@ end
 
 function Profiler.events:PLAYER_ENTER_WORLD(...)
     print("Player enter world:", ...)
-    Profiler:RecordCurrentTimes("Startup") -- TODO: only first time
 end
 
 
@@ -123,17 +121,3 @@ function Profiler:Enable()
 end
 
 Profiler:Enable()
-
-
-
-function t()
-    UpdateAddOnCPUUsage()
-    for addon,fs in pairs(byAddOn) do
-        local total = 0
-        for name,f in pairs(fs) do
-            local time = GetFunctionCPUUsage(f)
-            total = total + time
-        end
-        print(string.format("%-70.70s %6.2f %6.2f", addon, GetAddOnCPUUsage(addon), total))
-    end
-end
