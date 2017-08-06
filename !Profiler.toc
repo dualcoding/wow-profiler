@@ -1,0 +1,10 @@
+## Interface: 70100
+## Title: !Profiler
+## Notes: Find out what addons are slowing you down.
+## Author: dualcoding
+
+#SavedVariables: ProfilerDB
+
+## X-Category: Development tools
+
+Profiler.lua
