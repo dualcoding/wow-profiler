@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 70200
 ## Title: !Profiler
 ## Notes: Find out what addons are slowing you down.
 ## Author: dualcoding
