@@ -7,4 +7,5 @@
 
 ## X-Category: Development tools
 
-Profiler.lua
+src/addon.lua
+src/ui.lua
