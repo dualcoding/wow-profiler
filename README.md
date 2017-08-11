@@ -1,4 +1,4 @@
-# WoW-Profiler
+# Profiler for World of Warcraft
 Investigating the plausibility of a proper profiler for WoW Lua as an addon.
 
 ## Concerns
