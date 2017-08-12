@@ -1,6 +1,6 @@
 -- Helper functions to make UI code less verbose
 
-local ADDON, profiler = ...
+local ADDON_NAME, profiler = ...
 
 if not profiler.ui then
     profiler.ui = {}

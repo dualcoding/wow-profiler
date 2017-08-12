@@ -1,4 +1,4 @@
-local ADDON, profiler = ...
+local ADDON_NAME, profiler = ...
 
 --
 -- Auto mode
@@ -103,7 +103,7 @@ function profiler.init()
 end
 
 function profiler.events:ADDON_LOADED(addon)
-    if addon=="!Profiler" then return profiler.init() end
+    if addon==ADDON_NAME then return profiler.init() end
 
     --[[
     -- assume new functions found are from the loaded addon

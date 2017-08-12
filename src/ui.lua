@@ -1,6 +1,6 @@
 -- UI code for the Profiler window
 
-local ADDON, profiler = ...
+local ADDON_NAME, profiler = ...
 local ui = profiler.ui
 
 
