@@ -110,6 +110,25 @@ end
 
 
 
+
+function Profiler:UpdateUI()
+    local window = self.window
+    local rows = window.rows
+    local data = Profiler:updateAddOnInfo()
+    table.sort(data, function(a,b) return a.cpu>b.cpu end)
+    for i=1,#rows do
+        local row = rows[i]
+        local info = data[i]
+        if info then
+            row.name:SetText(info.title)
+            row.value:SetText(string.format("%6.4fms", info.cpu))
+        else
+            row.name:SetText("")
+            row.value:SetText("")
+        end
+    end
+end
+
 --
 -- Create UI
 --
@@ -165,21 +184,29 @@ function Profiler:CreateUI()
         local maxRows = math.floor(workspace:GetHeight()/rowHeight)
         for i=1, maxRows do
             local offset = (i-1)*rowHeight
-            local row = CreateFrame("StatusBar", nil, workspace)
-            row:SetHeight(rowHeight)
-            row:SetPoint("TOPLEFT", workspace, "TOPLEFT", 0, -offset)
-            row:SetPoint("TOPRIGHT", workspace, "TOPRIGHT", 0, -offset)
+            local row = {}
+            local bg = CreateFrame("StatusBar", nil, workspace)
+            bg:SetHeight(rowHeight)
+            bg:SetPoint("TOPLEFT", workspace, "TOPLEFT", 0, -offset)
+            bg:SetPoint("TOPRIGHT", workspace, "TOPRIGHT", 0, -offset)
             
-            local text = row:CreateFontString(nil, "MEDIUM", fonts.text)
+            local text = bg:CreateFontString(nil, "MEDIUM", fonts.text)
             text:SetPoint("LEFT", 2, 0)
             text:SetText("None")
 
-            local valuetext = row:CreateFontString(nil, "MEDIUM", fonts.value)
+            local valuetext = bg:CreateFontString(nil, "MEDIUM", fonts.value)
             valuetext:SetPoint("RIGHT", -2, 0)
             valuetext:SetText("0.0")
 
+            row.bg = bg
+            row.name = text
+            row.value = valuetext
             rows[#rows+1] = row
         end
     end
     window:Show()
+
+    window.rows = rows
+    self.window = window
+    self:UpdateUI()
 end
