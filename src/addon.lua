@@ -1,4 +1,4 @@
-Profiler = {}
+local ADDON, profiler = ...
 
 --
 -- Auto mode
@@ -8,7 +8,7 @@ local Known = {}
 local RefersTo = {}
 local SeenFirst = {}   -- first seen during loading this addon
 
-function Profiler:traverseTable(traverse, fromAddon, basePath, tableSeen)
+function profiler.traverseTable(traverse, fromAddon, basePath, tableSeen)
     -- Traverse the given table to find functions, attributing them to the given addon name
     
     local basePath = basePath or ""
@@ -43,14 +43,14 @@ function Profiler:traverseTable(traverse, fromAddon, basePath, tableSeen)
             local tab = value
             if not tableSeen[tab] then
                 tableSeen[tab] = true
-                Profiler:traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
+                profiler.traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
             end
         end
         if type(key) == "table" then
             local tab = key
             if not tableSeen[tab] then
                 tableSeen[tab] = true
-                Profiler:traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
+                profiler:traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
             end
         end
 
@@ -58,7 +58,7 @@ function Profiler:traverseTable(traverse, fromAddon, basePath, tableSeen)
 end
 
 
-function Profiler:updateAddOnInfo()
+function profiler.updateAddOnInfo()
     UpdateAddOnCPUUsage()
     UpdateAddOnMemoryUsage()
     local res = {}
@@ -75,10 +75,10 @@ end
 -- Load addon
 --
 
-Profiler.events = {}
-Profiler.frame = CreateFrame("Frame", "Profiler", UIParent)
+profiler.events = {}
+profiler.frame = CreateFrame("Frame", "Profiler", UIParent)
 
-function Profiler:Init()
+function profiler.init()
     -- Warn if any other addons were loaded before us
     for i=1,GetNumAddOns() do
         if IsAddOnLoaded(i) then
@@ -102,8 +102,8 @@ function Profiler:Init()
     --]]
 end
 
-function Profiler.events:ADDON_LOADED(addon)
-    if addon=="!Profiler" then return Profiler:Init() end
+function profiler.events:ADDON_LOADED(addon)
+    if addon=="!Profiler" then return profiler.init() end
 
     --[[
     -- assume new functions found are from the loaded addon
@@ -114,20 +114,20 @@ function Profiler.events:ADDON_LOADED(addon)
     --]]
 end
 
-function Profiler.events:PLAYER_LOGIN(...)  
+function profiler.events:PLAYER_LOGIN(...)  
     print("Player login:", ...)
 end
 
-function Profiler.events:PLAYER_ENTERING_WORLD(...)
-    Profiler:CreateUI()
+function profiler.events:PLAYER_ENTERING_WORLD(...)
+    profiler.ui.Window:init()
     print("Player enter world:", ...)
 end
 
 
 
-function Profiler:Enable()
-    local events = Profiler.events
-    local frame = Profiler.frame
+function profiler.enable()
+    local events = profiler.events
+    local frame = profiler.frame
     frame:SetScript("OnEvent", function(self, event, ...)
         events[event](self, ...)
     end)
@@ -136,4 +136,4 @@ function Profiler:Enable()
     end
 end
 
-Profiler:Enable()
+profiler.enable()

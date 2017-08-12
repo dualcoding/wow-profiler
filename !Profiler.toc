@@ -7,5 +7,7 @@
 
 ## X-Category: Development tools
 
-src/addon.lua
+src/ui_utility.lua
+src/ui_data.lua
 src/ui.lua
+src/addon.lua
