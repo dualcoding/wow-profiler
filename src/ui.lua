@@ -10,6 +10,7 @@ local colors = {
     titlebar     = {0.05,  0.05,  0.05,  1.00},
     header       = {0.80,  0.80,  0.80,  0.90},
     workspace    = {1.00,  1.00,  1.00,  0.90},
+    minimize     = {1.00,  0.00,  0.00,  1.00},
 }
 
 local fonts = {
@@ -110,6 +111,37 @@ end
 
 
 
+
+function Profiler:UpdateUI(dT)
+    local window = self.window
+    local rows = window.rows
+    local scrolling = rows.scrolling
+    local data = Profiler:updateAddOnInfo()
+    table.sort(data, function(a,b) return a.cpu>b.cpu end)
+    for i=1,#rows do
+        local row = rows[i]
+        local info = data[i+scrolling]
+        if info then
+            row.name:SetText(info.title)
+            row.value:SetText(string.format("%6.4fms", info.cpu))
+        else
+            row.name:SetText("")
+            row.value:SetText("")
+        end
+    end
+    self.addOnInfo = data
+end
+
+local elapsed = 0
+local function updateTimer(self, dT)
+    elapsed = elapsed + dT
+    if elapsed < 2 then return
+    else
+        Profiler:UpdateUI()
+        elapsed = 0
+    end
+end
+
 --
 -- Create UI
 --
@@ -128,7 +160,12 @@ function Profiler:CreateUI()
         align(title, "left", titlebar)
 
         local subtitle = text(titlebar, "Test", fonts.subtitle)
-        align(subtitle, "left", title, "right", {gap=2})
+        align(subtitle, "left", title, "right", {x=2})
+
+        local minimize = box(titlebar, colors.minimize)
+        size(minimize, 15, 15)
+        align(minimize, "right", titlebar, "right", {x=-3, y=1})
+
 
         local function titlebarMouseDown(self, button)
             if button=="LeftButton" then
@@ -140,7 +177,7 @@ function Profiler:CreateUI()
                 window:StopMovingOrSizing()
             end
         end
-        titlebar:SetScript("OnMouseDown", titlebarMouseDown)
+        titlebar:SetScript("OnMouseDown", titlebarMouseDown) -- TODO -> OnDrag
         titlebar:SetScript("OnMouseUp", titlebarMouseUp)
     end
 
@@ -165,21 +202,44 @@ function Profiler:CreateUI()
         local maxRows = math.floor(workspace:GetHeight()/rowHeight)
         for i=1, maxRows do
             local offset = (i-1)*rowHeight
-            local row = CreateFrame("StatusBar", nil, workspace)
-            row:SetHeight(rowHeight)
-            row:SetPoint("TOPLEFT", workspace, "TOPLEFT", 0, -offset)
-            row:SetPoint("TOPRIGHT", workspace, "TOPRIGHT", 0, -offset)
+            local row = {}
+            local bg = CreateFrame("StatusBar", nil, workspace)
+            bg:SetHeight(rowHeight)
+            bg:SetPoint("TOPLEFT", workspace, "TOPLEFT", 0, -offset)
+            bg:SetPoint("TOPRIGHT", workspace, "TOPRIGHT", 0, -offset)
             
-            local text = row:CreateFontString(nil, "MEDIUM", fonts.text)
+            local text = bg:CreateFontString(nil, "MEDIUM", fonts.text)
             text:SetPoint("LEFT", 2, 0)
             text:SetText("None")
 
-            local valuetext = row:CreateFontString(nil, "MEDIUM", fonts.value)
+            local valuetext = bg:CreateFontString(nil, "MEDIUM", fonts.value)
             valuetext:SetPoint("RIGHT", -2, 0)
             valuetext:SetText("0.0")
 
+            row.bg = bg
+            row.name = text
+            row.value = valuetext
             rows[#rows+1] = row
         end
     end
+
+    window:SetScript("OnUpdate", updateTimer)
+    window:SetScript("OnMouseWheel", function(self, delta)
+        rows.scrolling = rows.scrolling - delta
+        if rows.scrolling > #Profiler.addOnInfo - #rows then
+            rows.scrolling = #Profiler.addOnInfo - #rows
+        elseif rows.scrolling < 0 then
+            rows.scrolling = 0
+        end
+        Profiler:UpdateUI()
+    end)
+    rows.scrolling = 0
+
+
+
     window:Show()
+
+    window.rows = rows
+    self.window = window
+    self:UpdateUI()
 end

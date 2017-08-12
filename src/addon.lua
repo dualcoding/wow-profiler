@@ -58,6 +58,17 @@ function Profiler:traverseTable(traverse, fromAddon, basePath, tableSeen)
 end
 
 
+function Profiler:updateAddOnInfo()
+    UpdateAddOnCPUUsage()
+    UpdateAddOnMemoryUsage()
+    local res = {}
+    for i=1,GetNumAddOns() do
+        local name,title,notes,loadable,reason,security = GetAddOnInfo(i)
+        res[i] = {name=name, title=title ,cpu=GetAddOnCPUUsage(i), mem=GetAddOnMemoryUsage(i)}
+    end
+    return res
+end
+
 
 
 --
