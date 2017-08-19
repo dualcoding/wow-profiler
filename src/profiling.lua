@@ -32,7 +32,9 @@ function profiler.newGlobals()
 end
 
 
-profiler.namespaces = {}
+profiler.namespaces = {
+    [0] = {name="Root", title="Root", cpu=0, mem=0, value=profiler.namespaces}
+}
 function profiler.registerNamespace(name, namespace, parent, seen)
     -- TODO: only add tables with functions
     local has_function_child
@@ -44,13 +46,20 @@ function profiler.registerNamespace(name, namespace, parent, seen)
         }
     end
 
-    local parent = parent or profiler.namespaces
     local this = {}
+    if not parent then
+        parent = profiler.namespaces
+        parent[#parent+1] = {name=name, title=name, namespace=this, type="addon", cpu=0, mem=0}
+    else
+        parent[#parent+1] = {name=name, title=name, namespace=this, type="table", cpu=0}
+    end
     parent[name] = this
     this[-1] = parent
+    this[0] = parent[#parent]
     for key,value in pairs(namespace) do
         if type(value)=="function" and type(key)=="string" then
             this[key] = value
+            this[#this+1] = {name=key, title=key, fun=value, cpu=0, type="function"}
             has_function_child = true
         end
 
@@ -67,13 +76,30 @@ function profiler.registerBlizzard()
 end
 
 
-function profiler.updateAddOnInfo()
-    UpdateAddOnCPUUsage()
-    UpdateAddOnMemoryUsage()
-    local res = {}
-    for i=1,GetNumAddOns() do
-        local name,title,notes,loadable,reason,security = GetAddOnInfo(i)
-        res[i] = {name=name, title=title ,cpu=GetAddOnCPUUsage(i), mem=GetAddOnMemoryUsage(i)}
+function profiler.updateTimes(namespace)
+    if namespace==profiler.namespaces then
+        UpdateAddOnCPUUsage()
+        UpdateAddOnMemoryUsage()
     end
-    return res
+    local totalCPU = 0
+    local totalMem = 0
+    if type(namespace)=="function" then
+        return GetFunctionCPUUsage(namespace)
+    end
+    for i=1,#namespace do
+        local x = namespace[i]
+        if x.type=="addon" then
+            x.cpu = GetAddOnCPUUsage(x.name)
+            x.mem = GetAddOnMemoryUsage(x.name)
+        elseif x.type=="function" then
+            x.cpu = GetFunctionCPUUsage(x.fun)
+        elseif x.type=="table" then
+            x.cpu = profiler.updateTimes(x.namespace)
+        end
+
+        totalCPU = totalCPU + x.cpu
+        totalMem = totalMem + (x.mem or 0)
+    end
+    table.sort(namespace, function(a,b) return a.cpu>b.cpu end)
+    return totalCPU, totalMem
 end

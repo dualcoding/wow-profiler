@@ -34,6 +34,7 @@ profiler.events = {
     end,
 
     PLAYER_ENTERING_WORLD = function(frame, ...)
+        setmetatable(_G, nil)
         profiler.ui.Window:init()
     end,
 
