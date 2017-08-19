@@ -6,11 +6,11 @@ local ADDON_NAME, profiler = ...
 
 local Known = {}
 local RefersTo = {}
-local SeenFirst = {}   -- first seen during loading this addon
+SeenFirst = {}   -- first seen during loading this addon
 
 function profiler.traverseTable(traverse, fromAddon, basePath, tableSeen)
     -- Traverse the given table to find functions, attributing them to the given addon name
-    
+
     local basePath = basePath or ""
     local tableSeen = tableSeen or {} -- used to avoid cycles
 
@@ -39,7 +39,7 @@ function profiler.traverseTable(traverse, fromAddon, basePath, tableSeen)
         end
 
         -- recurse subtables
-        if type(value) == "table" then 
+        if type(value) == "table" then
             local tab = value
             if not tableSeen[tab] then
                 tableSeen[tab] = true
@@ -50,7 +50,7 @@ function profiler.traverseTable(traverse, fromAddon, basePath, tableSeen)
             local tab = key
             if not tableSeen[tab] then
                 tableSeen[tab] = true
-                profiler:traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
+                profiler.traverseTable(tab, fromAddon, basePath..name..".", tableSeen)
             end
         end
 
@@ -91,30 +91,28 @@ function profiler.init()
     end
 
     -- Claim our own functions, then attribute all other globals to Blizzard
-    --[[
-    Profiler:traverseTable(Profiler, "Profiler")
-    Profiler:traverseTable(_G, "Blizzard")
+    profiler.traverseTable(profiler, "!Profiler")
+    profiler.traverseTable(_G, "Blizzard")
     local nProfiler, nBlizzard = 0, 0
-    for _ in pairs(SeenFirst["Profiler"]) do nProfiler = nProfiler + 1 end
+    for _ in pairs(SeenFirst["!Profiler"]) do nProfiler = nProfiler + 1 end
     for _ in pairs(SeenFirst["Blizzard"]) do nBlizzard = nBlizzard + 1 end
 
     print("Profiler loaded, registering", nProfiler, "own functions and", nBlizzard, "Blizzard functions.")
-    --]]
 end
 
 function profiler.events:ADDON_LOADED(addon)
     if addon==ADDON_NAME then return profiler.init() end
 
-    --[[
+    --profiler.auto.addonLoaded(addon)
     -- assume new functions found are from the loaded addon
-    Profiler:traverseTable(_G, addon)
+    profiler.traverseTable(_G, addon)
     local nNew = 0
     for _ in pairs(SeenFirst[addon]) do nNew = nNew + 1 end
     print("Profiler: found", nNew, "new functions after", addon, "loaded.")
     --]]
 end
 
-function profiler.events:PLAYER_LOGIN(...)  
+function profiler.events:PLAYER_LOGIN(...)
     print("Player login:", ...)
 end
 

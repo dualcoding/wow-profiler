@@ -116,10 +116,23 @@ function Window.init(self)
             row.name = text
             row.value = valuetext
             rows[#rows+1] = row
+
+            row.bg:SetScript("OnMouseUp", function(self, button)
+                if button=="LeftButton" then
+                    window.mode="FUNCTIONS"
+                    window.currentName = row.id
+                    rows.scrolling = 0
+                elseif button=="RightButton" then
+                    window.mode="ADDON"
+                    rows.scrolling = 0
+                end
+                window:update()
+            end)
         end
     end
 
     window:SetScript("OnUpdate", updateTimer)
+
     window:SetScript("OnMouseWheel", function(self, delta)
         rows.scrolling = rows.scrolling - delta
         if rows.scrolling > #window.addOnInfo - #rows then
@@ -138,15 +151,26 @@ function Window:update()
     local window = self
     local rows = window.rows
     local scrolling = rows.scrolling
-    local data = profiler.updateAddOnInfo()
+    local data 
+    print("trying to show", self.currentName)
+    if self.mode=="FUNCTIONS" and SeenFirst[self.currentName] then
+        data = {}
+        for v,k in pairs(SeenFirst[self.currentName]) do
+            data[#data+1] = {name=k, title=k, cpu=GetFunctionCPUUsage(v), mem=0}
+        end
+    else
+        data = profiler.updateAddOnInfo()
+    end
     table.sort(data, function(a,b) return a.cpu>b.cpu end)
     for i=1,#rows do
         local row = rows[i]
         local info = data[i+scrolling]
         if info then
+            row.id = info.name
             row.name:SetText(info.title)
             row.value:SetText(string.format("%6.4fms", info.cpu))
         else
+            row.id = nil
             row.name:SetText("")
             row.value:SetText("")
         end
