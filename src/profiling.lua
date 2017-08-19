@@ -110,13 +110,13 @@ end
 -- Traces
 --
 
-local clock = os.time
+local clock = debugprofilestop
 
 local ActiveTrace = nil
 Trace = function(lexkey)
     local trace = {
         text = lexkey,
-        time = 0,
+        cpu = 0,
         runs = 0,
         started = nil,
         parent = nil,
@@ -152,7 +152,7 @@ Trace = function(lexkey)
 
             local runtime = clock() - self.started
             self.started = nil
-            self.time = self.time + runtime
+            self.cpu = self.cpu + runtime
             self.runs = self.runs + 1
 
             if self.parent then
