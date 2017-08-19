@@ -151,12 +151,13 @@ function Window:update()
     local window = self
     local rows = window.rows
     local scrolling = rows.scrolling
-    local data 
-    print("trying to show", self.currentName)
-    if self.mode=="FUNCTIONS" and SeenFirst[self.currentName] then
+    local data
+    if self.mode=="FUNCTIONS" and profiler.namespaces[self.currentName] then
         data = {}
-        for v,k in pairs(SeenFirst[self.currentName]) do
-            data[#data+1] = {name=k, title=k, cpu=GetFunctionCPUUsage(v), mem=0}
+        for k,v in pairs(profiler.namespaces[self.currentName]) do
+            if type(v)=="function" then
+                data[#data+1] = {name=k, title=k, cpu=GetFunctionCPUUsage(v), mem=0}
+            end
         end
     else
         data = profiler.updateAddOnInfo()
