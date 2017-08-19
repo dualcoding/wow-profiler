@@ -103,3 +103,64 @@ function profiler.updateTimes(namespace)
     table.sort(namespace, function(a,b) return a.cpu>b.cpu end)
     return totalCPU, totalMem
 end
+
+
+
+--
+-- Traces
+--
+
+local clock = os.time
+
+local ActiveTrace = nil
+Trace = function(lexkey)
+    local trace = {
+        text = lexkey,
+        time = 0,
+        runs = 0,
+        started = nil,
+        parent = nil,
+        children = {},
+
+        start = function(self)
+            if ActiveTrace then
+                self.parent = ActiveTrace
+                ActiveTrace.children[self.text] = self
+            end
+            ActiveTrace = self
+            self.started = clock()
+            return self
+        end,
+
+        next = function(self, lexkey)
+            if not ActiveTrace then self:start() end
+            -- stop all traces further down the line, making this the current one
+            while ActiveTrace ~= self do ActiveTrace:stop() end
+
+            -- start the next trace, building on an earlier if available
+            local child = self.children[lexkey]
+            if not child then
+                child = Trace(lexkey)
+                self.children[lexkey] = child
+            end
+            child:start()
+        end,
+
+        stop = function(self)
+            -- also stop all traces further down the line
+            while ActiveTrace ~= self do ActiveTrace:stop() end
+
+            local runtime = clock() - self.started
+            self.started = nil
+            self.time = self.time + runtime
+            self.runs = self.runs + 1
+
+            if self.parent then
+                ActiveTrace = self.parent
+            else
+                ActiveTrace = nil
+            end
+        end,
+    }
+    return trace
+end
