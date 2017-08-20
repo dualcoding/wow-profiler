@@ -36,10 +36,10 @@ profiler.namespaces = {
 }
 function profiler.registerNamespace(name, namespace, parent, seen)
     if not seen then
-        -- break cycles
+        -- break cycles and avoid misattribution
         seen = {
-            --[_G] = true,
-            [profiler.namespaces] = true, -- TODO: find out WHY necessary
+            [_G] = true,
+            [profiler.namespaces] = true,
         }
     end
 
@@ -74,10 +74,6 @@ function profiler.registerNamespace(name, namespace, parent, seen)
     else
         return nil
     end
-end
-
-function profiler.registerBlizzard()
-    -- TODO
 end
 
 
