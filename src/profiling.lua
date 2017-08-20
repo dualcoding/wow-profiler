@@ -104,6 +104,12 @@ function profiler.updateTimes(namespace)
         totalCPU = totalCPU + x.cpu
         totalMem = totalMem + (x.mem or 0)
     end
-    table.sort(namespace, function(a,b) return a.cpu>b.cpu end)
+    table.sort(namespace, function(a,b)
+        if a.cpu==b.cpu then
+            return a.name<b.name
+        else
+            return a.cpu>b.cpu
+        end
+    end)
     return totalCPU, totalMem
 end
