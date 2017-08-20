@@ -7,6 +7,5 @@ A profiler for WoW addons that tries to go deeper.
  `if Profiler then _G.PublicTable = privateTable end`
 
 ## Roadmap
-- Make it robust and bugfree
 - Improve the user interface
 - Provide more functionality to addon developers

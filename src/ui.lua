@@ -74,7 +74,7 @@ function Window.init(self)
                 window:StopMovingOrSizing()
             end
         end
-        titlebar:SetScript("OnMouseDown", titlebarMouseDown) -- TODO -> OnDrag?
+        titlebar:SetScript("OnMouseDown", titlebarMouseDown)
         titlebar:SetScript("OnMouseUp", titlebarMouseUp)
 
         titlebar.title = title
