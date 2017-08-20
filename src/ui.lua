@@ -16,13 +16,13 @@ local size   = ui.data.size
 local edgecolor = ui.utility.edgecolor
 local bgcolor   = ui.utility.bgcolor
 
-local align     = ui.utility.align
+--local align     = ui.utility.align
 --local size      = ui.utility.size
-local height    = ui.utility.height
-local width     = ui.utility.width
+--local height    = ui.utility.height
+--local width     = ui.utility.width
 
 local box       = ui.utility.box
-local text      = ui.utility.text
+--local text      = ui.utility.text
 
 
 
@@ -86,6 +86,25 @@ function Window:init()
     header:SetPoint("topright", titlebar, "bottomright")
     header:SetHeight(size.header)
     bgcolor(header, colors.header)
+    do
+        local name
+        name = header:CreateFontString(nil, "MEDIUM", fonts.text)
+        name:SetText("Name")
+        name:SetPoint("left", 2, 0)
+        header.name = name
+
+        local cpu
+        cpu = header:CreateFontString(nil, "MEDIUM", fonts.text)
+        cpu:SetText("CPU")
+        cpu:SetPoint("right", -2, 0)
+        header.cpu = cpu
+
+        local ncalls
+        ncalls = header:CreateFontString(nil, "MEDIUM", fonts.text)
+        ncalls:SetText("Called")
+        ncalls:SetPoint("right", -size.cpu, 0)
+        header.ncalls = ncalls
+    end
 
     local footer
     footer = CreateFrame("Frame", nil, window)
@@ -118,7 +137,7 @@ function Window:init()
                 local name
                 name = CreateFrame("Frame", nil, row)
                 bgcolor(name, colors.namebg)
-                name:SetSize(200, size.row)
+                name:SetHeight(size.row)
                 name:SetPoint("LEFT")
                 name.text = name:CreateFontString(nil, "MEDIUM", fonts.text)
                 name.text:SetPoint("LEFT", 2, 0)
@@ -128,7 +147,7 @@ function Window:init()
                 local cpu
                 cpu = CreateFrame("Frame", nil, row)
                 bgcolor(cpu, colors.cpubg)
-                cpu:SetSize(50, size.row)
+                cpu:SetSize(size.cpu, size.row)
                 cpu:SetPoint("RIGHT")
                 cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.value)
                 cpu.text:SetPoint("RIGHT", -2, 0)
@@ -138,12 +157,14 @@ function Window:init()
                 local ncalls
                 ncalls = CreateFrame("Frame", nil, row)
                 bgcolor(ncalls, colors.ncallsbg)
-                ncalls:SetSize(50, size.row)
+                ncalls:SetSize(size.ncalls, size.row)
                 ncalls:SetPoint("RIGHT", cpu, "LEFT")
                 ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.value)
                 ncalls.text:SetPoint("RIGHT", -2, 0)
                 ncalls.text:SetText("0")
                 columns.ncalls = ncalls
+
+                name:SetPoint("right", ncalls, "left")
             end
             row.columns = columns
 
