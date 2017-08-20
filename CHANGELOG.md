@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3] 2017-08-20
+### Added
+- Header showing column names
+- Column "mem/ncalls" for memory and times called
+- The sorting of entries can be changed by clicking on the header
+
 ## [0.2] 2017-08-20
 ### Changed
 - Entries with the same CPU time (usually 0) are sorted in alphabetical order.
