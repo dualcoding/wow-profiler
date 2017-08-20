@@ -195,6 +195,7 @@ function Window:init()
     window:SetScript("OnUpdate", updateTimer)
 
     window:SetScript("OnMouseWheel", function(self, delta)
+        if #window.data < #window.rows then return end
         rows.scrolling = rows.scrolling - delta
         if rows.scrolling > #window.data - #rows then
             rows.scrolling = #window.data - #rows
