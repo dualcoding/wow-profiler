@@ -77,7 +77,7 @@ function profiler.registerNamespace(name, namespace, parent, seen)
 end
 
 
-function profiler.updateTimes(namespace)
+function profiler.updateTimes(namespace, sortby)
     if namespace==profiler.namespaces then
         UpdateAddOnCPUUsage()
         UpdateAddOnMemoryUsage()
@@ -101,12 +101,30 @@ function profiler.updateTimes(namespace)
         totalCPU = totalCPU + x.cpu
         totalMem = totalMem + (x.mem or 0)
     end
-    table.sort(namespace, function(a,b)
-        if a.cpu==b.cpu then
+    sortby = sortby or "cpu"
+    if sortby=="cpu" then
+        table.sort(namespace, function(a,b)
+            if a.cpu==b.cpu then
+                return a.name<b.name
+            else
+                return a.cpu>b.cpu
+            end
+        end)
+    elseif sortby=="name" then
+        table.sort(namespace, function(a,b)
             return a.name<b.name
-        else
-            return a.cpu>b.cpu
-        end
-    end)
+        end)
+    --elseif sortby=="mem" then
+    elseif sortby=="ncalls" then
+        table.sort(namespace, function(a,b)
+            acalls = a.ncalls or a.mem or 0
+            bcalls = b.ncalls or b.mem or 0
+            if acalls==bcalls then
+                return a.name<b.name
+            else
+                return acalls>bcalls
+            end
+        end)
+    end
     return totalCPU, totalMem
 end

@@ -16,13 +16,7 @@ local size   = ui.data.size
 local edgecolor = ui.utility.edgecolor
 local bgcolor   = ui.utility.bgcolor
 
---local align     = ui.utility.align
---local size      = ui.utility.size
---local height    = ui.utility.height
---local width     = ui.utility.width
-
 local box       = ui.utility.box
---local text      = ui.utility.text
 
 
 
@@ -38,7 +32,7 @@ local function updateTimer(self, dT)
     elapsed = elapsed + dT
     if elapsed < 1 then return
     else
-        profiler.updateTimes(ui.Window.data)
+        profiler.updateTimes(ui.Window.data, Window.sortby)
         ui.Window:update()
         elapsed = 0
     end
@@ -88,22 +82,34 @@ function Window:init()
     bgcolor(header, colors.header)
     do
         local name
-        name = header:CreateFontString(nil, "MEDIUM", fonts.text)
-        name:SetText("Name")
-        name:SetPoint("left", 2, 0)
+        name = CreateFrame("Frame", nil, header)
+        name:SetPoint("left")
+        name:SetSize(200, size.header)
+        name.text = name:CreateFontString(nil, "MEDIUM", fonts.text)
+        name.text:SetText("Name")
+        name.text:SetPoint("left", 2, 0)
         header.name = name
+        name:SetScript("OnMouseDown", function(...) window.sortby="name" end)
 
         local cpu
-        cpu = header:CreateFontString(nil, "MEDIUM", fonts.text)
-        cpu:SetText("CPU")
-        cpu:SetPoint("right", -2, 0)
+        cpu = CreateFrame("Frame", nil, header)
+        cpu:SetPoint("right")
+        cpu:SetSize(size.cpu, size.header)
+        cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
+        cpu.text:SetText("CPU")
+        cpu.text:SetPoint("right", -2, 0)
         header.cpu = cpu
+        cpu:SetScript("OnMouseDown", function(...) window.sortby="cpu" end)
 
         local ncalls
-        ncalls = header:CreateFontString(nil, "MEDIUM", fonts.text)
-        ncalls:SetText("Called")
-        ncalls:SetPoint("right", -size.cpu, 0)
+        ncalls = CreateFrame("Frame", nil, header)
+        ncalls:SetPoint("right", header.cpu, "left")
+        ncalls:SetSize(size.ncalls, size.header)
+        ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.text)
+        ncalls.text:SetText("mem/ncalls")
+        ncalls.text:SetPoint("right", -2, 0)
         header.ncalls = ncalls
+        ncalls:SetScript("OnMouseDown", function(...) window.sortby="ncalls" end)
     end
 
     local footer
@@ -201,7 +207,7 @@ function Window:init()
 
     window.rows = rows
     window.data = profiler.namespaces
-    profiler.updateTimes(window.data)
+    profiler.updateTimes(window.data, window.sortby)
     window:update()
 end
 
