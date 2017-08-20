@@ -35,8 +35,6 @@ profiler.namespaces = {
     [0] = {name="Root", title="Root", cpu=0, mem=0, value=profiler.namespaces}
 }
 function profiler.registerNamespace(name, namespace, parent, seen)
-    -- TODO: only add tables with functions
-    local has_function_child
     if not seen then
         -- break cycles
         seen = {
@@ -46,28 +44,35 @@ function profiler.registerNamespace(name, namespace, parent, seen)
     end
 
     local this = {}
-    if not parent then
-        parent = profiler.namespaces
-        parent[#parent+1] = {name=name, title=name, namespace=this, type="addon", cpu=0, mem=0}
-    else
-        parent[#parent+1] = {name=name, title=name, namespace=this, type="table", cpu=0}
-    end
-    parent[name] = this
-    this[-1] = parent
-    this[0] = parent[#parent]
+
     for key,value in pairs(namespace) do
         if type(value)=="function" and type(key)=="string" then
             this[key] = value
             this[#this+1] = {name=key, title=key, fun=value, cpu=0, type="function"}
-            has_function_child = true
         end
 
         if type(value)=="table" and type(key)=="string" and not seen[value] then
             seen[value] = true
-            profiler.registerNamespace(key, value, this, seen)
+            local child = profiler.registerNamespace(key, value, this, seen)
+            if child then
+                this[key] = child
+                this[#this+1] = {name=key, title=key, namespace=child, type="table", cpu=0}
+            end
         end
     end
-    return has_function_child
+
+    if #this>0 then
+        if not parent then
+            parent = profiler.namespaces
+            parent[#parent+1] = {name=name, title=name, namespace=this, type="addon", cpu=0, mem=0}
+            parent[name] = this
+        end
+        this[-1] = parent
+        this[0] = {name=name,title=name,namespace=this,type="table"}
+        return this
+    else
+        return nil
+    end
 end
 
 function profiler.registerBlizzard()
