@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] 2017-08-20
+### Fixed
+- Fix bug when scrolling in a partially filled window
+
 ## [0.3] 2017-08-20
 ### Added
 - Header showing column names
