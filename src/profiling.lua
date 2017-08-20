@@ -58,6 +58,7 @@ function profiler.registerNamespace(name, namespace, parent, seen)
                 this[key] = child
                 this[#this+1] = {name=key, title=key, namespace=child, type="table", cpu=0}
             end
+            seen[value] = nil
         end
     end
 
