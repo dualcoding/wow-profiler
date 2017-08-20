@@ -30,7 +30,6 @@ profiler.events = {
     end,
 
     PLAYER_LOGIN = function(frame, ...)
-        -- TODO: attribute to "startup"
     end,
 
     PLAYER_ENTERING_WORLD = function(frame, ...)

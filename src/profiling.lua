@@ -35,13 +35,7 @@ profiler.namespaces = {
     [0] = {name="Root", title="Root", cpu=0, mem=0, value=profiler.namespaces}
 }
 function profiler.registerNamespace(name, namespace, parent, seen)
-    if not seen then
-        -- break cycles
-        seen = {
-            --[_G] = true,
-            [profiler.namespaces] = true, -- TODO: find out WHY necessary
-        }
-    end
+    if not seen then seen = {} end
 
     local this = {}
 
@@ -74,10 +68,6 @@ function profiler.registerNamespace(name, namespace, parent, seen)
     else
         return nil
     end
-end
-
-function profiler.registerBlizzard()
-    -- TODO
 end
 
 
