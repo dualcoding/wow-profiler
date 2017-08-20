@@ -14,14 +14,13 @@ profiler.events = {
                 error(OUR_NAME, "was not loaded first")
             end
 
-            -- Claim our own functions, and attribute the rest to Blizzard
-            profiler.registerNamespace(OUR_NAME, profiler)
-            profiler.registerBlizzard()
-
             -- Start listening for new globals
             local blizzard = profiler.newGlobals()
             profiler.registerNamespace("Blizzard", blizzard)
 
+            -- Claim our own functions
+            _G.profiler = profiler
+            profiler.registerNamespace(OUR_NAME, profiler.newGlobals())
         else
             -- another addon was loaded - assume new stuff comes from it
             local new = profiler.newGlobals()
@@ -48,5 +47,3 @@ end)
 for k, v in pairs(profiler.events) do
     profiler.frame:RegisterEvent(k)
 end
-
-_G.profiler = profiler

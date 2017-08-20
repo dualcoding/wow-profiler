@@ -35,7 +35,13 @@ profiler.namespaces = {
     [0] = {name="Root", title="Root", cpu=0, mem=0, value=profiler.namespaces}
 }
 function profiler.registerNamespace(name, namespace, parent, seen)
-    if not seen then seen = {} end
+    if not seen then
+        -- break cycles and avoid misattribution
+        seen = {
+            [_G] = true,
+            [profiler.namespaces] = true,
+        }
+    end
 
     local this = {}
 
