@@ -108,18 +108,33 @@ function Window.init(self)
             row:SetHeight(rowHeight)
             row:SetPoint("TOPLEFT", workspace, "TOPLEFT", 0, -offset)
             row:SetPoint("TOPRIGHT", workspace, "TOPRIGHT", 0, -offset)
+            bgcolor(row, {1.0,1.0,1.0})
 
-            local text = row:CreateFontString(nil, "MEDIUM", fonts.text)
-            text:SetPoint("LEFT", 2, 0)
-            text:SetText("None")
+            local name = box(row, {0.9,0.9,0.9})
+            name:SetSize(200, rowHeight)
+            name:SetPoint("LEFT")
+            name.text = name:CreateFontString(nil, "MEDIUM", fonts.text)
+            name.text:SetPoint("LEFT", 2, 0)
+            name.text:SetText("None")
 
-            local valuetext = row:CreateFontString(nil, "MEDIUM", fonts.value)
-            valuetext:SetPoint("RIGHT", -2, 0)
-            valuetext:SetText("0.0")
+            local cpu = box(row, {0.8, 0.8, 0.8})
+            cpu:SetSize(50, rowHeight)
+            cpu:SetPoint("RIGHT")
+            cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.value)
+            cpu.text:SetPoint("RIGHT", -2, 0)
+            cpu.text:SetText("0.0")
 
-            row.name = text
-            row.value = valuetext
+            local ncalls = box(row, {0.9, 0.9, 0.9})
+            ncalls:SetSize(50, rowHeight)
+            ncalls:SetPoint("RIGHT", cpu, "LEFT")
+            ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.value)
+            ncalls.text:SetPoint("RIGHT", -2, 0)
+            ncalls.text:SetText("0")
+
+            row.name = name.text
+            row.value = cpu.text
             row.id = nil
+            row.typespecial = ncalls.text
             rows[#rows+1] = row
 
             row:SetScript("OnMouseUp", function(self, button)
@@ -168,7 +183,14 @@ function Window:update()
         if info then
             row.id = info.name
             row.name:SetText(info.title)
-            row.value:SetText(string.format("%6.4fms", info.cpu))
+            row.value:SetText(string.format("%6.0fms", info.cpu))
+            if info.mem then
+                row.typespecial:SetText(string.format("%6.2fmb", info.mem/1024))
+            elseif info.ncalls then
+                row.typespecial:SetText(info.ncalls)
+            else
+                row.typespecial:SetText("")
+            end
             if info.type=="table" then
                 row.name:SetTextColor(0.5, 0.0, 0.0)
             elseif info.type=="addon" then
@@ -180,6 +202,7 @@ function Window:update()
             row.id = nil
             row.name:SetText("")
             row.value:SetText("")
+            row.typespecial:SetText("")
         end
     end
 end

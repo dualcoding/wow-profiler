@@ -93,7 +93,7 @@ function profiler.updateTimes(namespace)
             x.cpu = GetAddOnCPUUsage(x.name)
             x.mem = GetAddOnMemoryUsage(x.name)
         elseif x.type=="function" then
-            x.cpu = GetFunctionCPUUsage(x.fun)
+            x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun)
         elseif x.type=="table" then
             x.cpu = profiler.updateTimes(x.namespace)
         end
