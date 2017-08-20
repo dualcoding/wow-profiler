@@ -15,20 +15,19 @@ function profiler.isFirstAddonLoaded()
 end
 
 
-local newGlobals
+local known = {}
 function profiler.newGlobals()
-    local res
-    if newGlobals then res = newGlobals end
-    newGlobals = {}
-    local mt = {
-        __newindex = function(t, k, v)
-            newGlobals[k] = v
-            rawset(t,k,v)
-        end,
-    }
-    setmetatable(_G, mt)
-
-    return res
+    -- traverse global namespace looking for unknown names
+    local new = {}
+    for key,value in pairs(_G) do
+        if type(key)=="string" and not known[key] then
+            known[key] = value
+            if type(value)=="function" or type(value)=="table" then
+                new[key] = value
+            end
+        end
+    end
+    return new
 end
 
 

@@ -19,8 +19,8 @@ profiler.events = {
             profiler.registerBlizzard()
 
             -- Start listening for new globals
-            local new = profiler.newGlobals()
-            if new then error("shouldn't find any new globals yet!") end
+            local blizzard = profiler.newGlobals()
+            profiler.registerNamespace("Blizzard", blizzard)
 
         else
             -- another addon was loaded - assume new stuff comes from it
@@ -34,7 +34,6 @@ profiler.events = {
     end,
 
     PLAYER_ENTERING_WORLD = function(frame, ...)
-        setmetatable(_G, nil)
         profiler.ui.Window:init()
     end,
 
