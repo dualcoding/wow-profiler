@@ -33,6 +33,7 @@ profiler.events = {
 
     PLAYER_ENTERING_WORLD = function(frame, ...)
         profiler.ui.Window:init()
+        profiler.freezeStartup()
     end,
 
 }
