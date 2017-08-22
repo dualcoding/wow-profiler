@@ -1,6 +1,11 @@
 local OUR_NAME, profiler = ...
 
 
+-- Add some Blizzard functions that we are probably exlusive users of to our namespace
+profiler["Blizzard: UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
+profiler["Blizzard: UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
+profiler["Blizzard: GetFunctionCPUUsage"] = GetFunctionCPUUsage
+
 function profiler.isFirstAddonLoaded()
     -- Are any other addons loaded?
     for i=1,GetNumAddOns() do
