@@ -25,6 +25,7 @@ ui.data.colors = {
     namebg       = {0.90,  0.90,  0.90,  1.00},
     cpubg        = {0.90,  0.90,  0.90,  1.00},
     ncallsbg     = {0.90,  0.90,  0.90,  1.00},
+    startupbg    = {0.90,  0.90,  0.90,  1.00},
 }
 
 ui.data.fonts = {
@@ -42,4 +43,5 @@ ui.data.size = {
     row = 15,
     cpu = 60,
     ncalls = 60,
+    startup = 60,
 }
