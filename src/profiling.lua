@@ -1,6 +1,11 @@
 local OUR_NAME, profiler = ...
 
 
+-- Add some Blizzard functions that we are probably exlusive users of to our namespace
+profiler["Blizzard: UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
+profiler["Blizzard: UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
+profiler["Blizzard: GetFunctionCPUUsage"] = GetFunctionCPUUsage
+
 function profiler.isFirstAddonLoaded()
     -- Are any other addons loaded?
     for i=1,GetNumAddOns() do
@@ -76,6 +81,28 @@ function profiler.registerNamespace(name, namespace, parent, seen)
     end
 end
 
+function profiler.freezeStartup()
+    -- update the cpu value first
+    profiler.updateTimes(profiler.namespaces)
+    for name,addon in pairs(profiler.namespaces) do
+        profiler.updateTimes(addon)
+    end
+
+    local ns = profiler.namespaces
+    local stack = {}
+    repeat
+        for i=1,#ns do
+            local x = ns[i]
+            x.startup = x.cpu
+            stack[#stack+1] = x.namespace
+        end
+        ns = table.remove(stack)
+    until not ns
+end
+
+--
+--
+--
 
 function profiler.updateTimes(namespace, sortby)
     if namespace==profiler.namespaces then
@@ -101,7 +128,7 @@ function profiler.updateTimes(namespace, sortby)
         totalCPU = totalCPU + x.cpu
         totalMem = totalMem + (x.mem or 0)
     end
-    sortby = sortby or "cpu"
+    sortby = sortby or "startup"
     if sortby=="cpu" then
         table.sort(namespace, function(a,b)
             if a.cpu==b.cpu then
@@ -123,6 +150,14 @@ function profiler.updateTimes(namespace, sortby)
                 return a.name<b.name
             else
                 return acalls>bcalls
+            end
+        end)
+    elseif sortby=="startup" then
+        table.sort(namespace, function(a,b)
+            if a.startup==b.startup then
+                return a.name<b.name
+            else
+                return a.startup>b.startup
             end
         end)
     end

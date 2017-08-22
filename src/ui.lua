@@ -96,14 +96,24 @@ function Window:init()
         cpu:SetPoint("right")
         cpu:SetSize(size.cpu, size.header)
         cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
-        cpu.text:SetText("CPU")
+        cpu.text:SetText("after")
         cpu.text:SetPoint("right", -2, 0)
         header.cpu = cpu
         cpu:SetScript("OnMouseDown", function(...) window.sortby="cpu" end)
 
+        local startup
+        startup = CreateFrame("Frame", nil, header)
+        startup:SetPoint("right", header.cpu, "left")
+        startup:SetSize(size.startup, size.header)
+        startup.text = startup:CreateFontString(nil, "MEDIUM", fonts.text)
+        startup.text:SetText("startup")
+        startup.text:SetPoint("right", -2, 0)
+        header.startup = startup
+        startup:SetScript("OnMouseDown", function(...) window.sortby="startup" end)
+
         local ncalls
         ncalls = CreateFrame("Frame", nil, header)
-        ncalls:SetPoint("right", header.cpu, "left")
+        ncalls:SetPoint("right", header.startup, "left")
         ncalls:SetSize(size.ncalls, size.header)
         ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.text)
         ncalls.text:SetText("mem/ncalls")
@@ -160,11 +170,21 @@ function Window:init()
                 cpu.text:SetText("0.0")
                 columns.cpu = cpu
 
+                local startup
+                startup = CreateFrame("Frame", nil, row)
+                bgcolor(startup, colors.startupbg)
+                startup:SetSize(size.startup, size.row)
+                startup:SetPoint("right", cpu, "left")
+                startup.text = startup:CreateFontString(nil, "MEDIUM", fonts.value)
+                startup.text:SetPoint("right", -2, 0)
+                startup.text:SetText("0")
+                columns.startup = startup
+
                 local ncalls
                 ncalls = CreateFrame("Frame", nil, row)
                 bgcolor(ncalls, colors.ncallsbg)
                 ncalls:SetSize(size.ncalls, size.row)
-                ncalls:SetPoint("RIGHT", cpu, "LEFT")
+                ncalls:SetPoint("RIGHT", startup, "LEFT")
                 ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.value)
                 ncalls.text:SetPoint("RIGHT", -2, 0)
                 ncalls.text:SetText("0")
@@ -225,6 +245,10 @@ function Window:update()
             row.id = info.name
             row.columns.name.text:SetText(info.title)
             row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu))
+            if info.startup then
+                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup))
+                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup))
+            end
             if info.mem then
                 row.columns.ncalls.text:SetText(string.format("%6.2fmb", info.mem/1024))
             elseif info.ncalls then
@@ -240,10 +264,12 @@ function Window:update()
                 row.columns.name.text:SetTextColor(0.0, 0.0, 0.0)
             end
         else
+            -- The row has no data to show
             row.id = nil
-            row.columns.name.text:SetText("")
-            row.columns.cpu.text:SetText("")
-            row.columns.ncalls.text:SetText("")
+            for name,f in pairs(row.columns) do
+                -- clear all texts
+                f.text:SetText("")
+            end
         end
     end
 end
