@@ -264,10 +264,12 @@ function Window:update()
                 row.columns.name.text:SetTextColor(0.0, 0.0, 0.0)
             end
         else
+            -- The row has no data to show
             row.id = nil
-            row.columns.name.text:SetText("")
-            row.columns.cpu.text:SetText("")
-            row.columns.ncalls.text:SetText("")
+            for name,f in pairs(row.columns) do
+                -- clear all texts
+                f.text:SetText("")
+            end
         end
     end
 end
