@@ -2,9 +2,10 @@ local OUR_NAME, profiler = ...
 
 
 -- Add some Blizzard functions that we are probably exlusive users of to our namespace
-profiler["Blizzard: UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
-profiler["Blizzard: UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
-profiler["Blizzard: GetFunctionCPUUsage"] = GetFunctionCPUUsage
+profiler.Blizzard = profiler.Blizzard or {}
+profiler.Blizzard["UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
+profiler.Blizzard["UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
+profiler.Blizzard["GetFunctionCPUUsage"] = GetFunctionCPUUsage
 
 local UpdateAddOnCPUUsage = _G.UpdateAddOnCPUUsage
 local UpdateAddOnMemoryUsage = _G.UpdateAddOnMemoryUsage
