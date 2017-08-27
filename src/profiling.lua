@@ -7,6 +7,64 @@ profiler.Blizzard["UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
 profiler.Blizzard["UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
 profiler.Blizzard["GetFunctionCPUUsage"] = GetFunctionCPUUsage
 
+profiler.callers = {}
+function cache(fun, secure)
+    local cached = profiler.callers[fun]
+    if not cached then
+        cached = {
+            [0] = {name="callers"},
+        }
+        profiler.callers[fun] = cached
+    end
+
+    local function errhandler(...)
+        local s
+        if secure then
+            s = debugstack(7,1,0)
+        else
+            s = debugstack(6,1,0)
+        end
+        local file, lineno, callername = s:match("Interface\\AddOns\\(.-).lua:(%d-):.-function `(.-)'")
+        if not callername then
+            file, lineno, callername =   s:match("Interface\\(.-).lua:(%d-):.-function `(.-)'")
+            if not callername then
+                file, lineno, callername = s:match("Interface\\(.-).lua:(%d):.-function <(.-)>")
+            end
+        end
+        if not callername then callername = "unknown" print() print(debugstack()) print() end --TODO: fixme
+        local callerinfo = cached[callername]
+        if not callerinfo then
+            callerinfo = {name=callername, title=callername, type="caller", ncalls=0, cpu=0}
+            cached[#cached+1] = callerinfo
+            cached[callername] = callerinfo
+        end
+        callerinfo.ncalls = callerinfo.ncalls + 1
+    end
+    if not secure then
+        return function(...)
+            xpcall(function() error("finding callsites the ugly way") end, errhandler)
+            -- do prestuff
+            local res = fun(...)
+            -- do poststuff
+            return res
+        end
+    else
+        return function(...)
+            xpcall(function() error("finding callsites the ugly way") end, errhandler)
+        end
+    end
+end
+
+function hook(t, name)
+    if issecurevariable(t, name) then
+        hooksecurefunc(t, name, cache(t[name], true))
+    else
+        t[name] = cache(t[name])
+    end
+end
+
+
+
 local UpdateAddOnCPUUsage = _G.UpdateAddOnCPUUsage
 local UpdateAddOnMemoryUsage = _G.UpdateAddOnMemoryUsage
 local GetFunctionCPUUsage = _G.GetFunctionCPUUsage
@@ -28,14 +86,6 @@ function profiler.newGlobals()
 end
 
 
-local profiling = false
-function trace(name, fun)
-    if not profiling then
-        return fun
-    else
-        return function(...) return fun(...) end
-    end
-end
 profiler.namespaces = {
     [0] = {name="Root", title="Root", cpu=0, mem=0, value=profiler.namespaces}
 }
@@ -83,6 +133,8 @@ function profiler.registerNamespace(name, namespace, parent, seen)
         return nil
     end
 end
+--hook(profiler, "registerNamespace")
+profiler.registerNamespace = cache(profiler.registerNamespace) -- this doesn't work, why?
 
 function profiler.freezeStartup()
     -- update the cpu value first
@@ -173,8 +225,12 @@ function profiler.updateTimes(namespace, sortby)
         end)
     elseif sortby=="startup" then
         sort(namespace, function(a,b)
+            a.startup = a.startup or 0
+            b.startup = b.startup or 0
             if a.startup==b.startup then
-                return a.name<b.name
+                if a.name and b.name then
+                    return a.name<b.name
+                end
             else
                 return a.startup>b.startup
             end

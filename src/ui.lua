@@ -199,11 +199,20 @@ function Window:init()
 
             row:SetScript("OnMouseUp", function(self, button)
                 if button=="LeftButton" then
-                    local d = window.data[self.id]
-                    window.data = type(d)~="function" and d or window.data
+                    local d = window.data[self.id] or window.data
+                    if profiler.hooks[d] then d = profiler.hooks[d] end
+                    if type(d)=="function" then
+                        window.previousdata = window.data
+                        window.data = profiler.callers[d] or window.data
+                    elseif d.type=="caller" then
+                        -- do nothing
+                    else
+                        window.data = d or window.data
+                    end
                     rows.scrolling = 0
                 elseif button=="RightButton" then
-                    window.data = window.data[-1] or window.data
+                    window.data = window.data[-1] or window.previousdata or window.data
+                    window.previousdata = nil
                     rows.scrolling = 0
                 end
                 window.titlebar.subtitle:SetText(window.data[0].name)
@@ -244,10 +253,10 @@ function Window:update()
         if info then
             row.id = info.name
             row.columns.name.text:SetText(info.title)
-            row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu))
+            row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu or 0))
             if info.startup then
-                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup))
-                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup))
+                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup or 0))
+                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup or 0))
             end
             if info.mem then
                 row.columns.ncalls.text:SetText(string.format("%+6.2f kb/s", info.memdiff))
