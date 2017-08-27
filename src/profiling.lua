@@ -138,12 +138,14 @@ function profiler.updateTimes(namespace, sortby)
 
 
     local function sort(t, fun)
-        return table.sort(t, function(a,b)
-            if     a.type=="table" and b.type~="table" then return true
-            elseif a.type~="table" and b.type=="table" then return false
-            end
-            return fun(a,b)
-        end)
+        -- Sorting tables first ended up being too much scrolling
+        --return table.sort(t, function(a,b)
+        --    if     a.type=="table" and b.type~="table" then return true
+        --    elseif a.type~="table" and b.type=="table" then return false
+        --    end
+        --    return fun(a,b)
+        --end)
+        return table.sort(t, fun)
     end
 
     if sortby=="cpu" then
