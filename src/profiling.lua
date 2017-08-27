@@ -62,6 +62,9 @@ function profiler.registerNamespace(name, namespace, parent, seen)
             if child then
                 this[key] = child
                 this[#this+1] = {name=key, title=key, namespace=child, type="table", cpu=0}
+                if rawget(value, 0) and type(rawget(value,0))=="userdata" then
+                    this[#this].subtype = "frame"
+                end
             end
             seen[value] = nil
         end

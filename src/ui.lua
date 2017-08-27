@@ -258,6 +258,9 @@ function Window:update()
             end
             if info.type=="table" then
                 row.columns.name.text:SetTextColor(0.5, 0.0, 0.0)
+                if info.subtype=="frame" then
+                    row.columns.name.text:SetTextColor(.0, .0, .5)
+                end
             elseif info.type=="addon" then
                 row.columns.name.text:SetTextColor(0.0, 0.5, 0.0)
             else
