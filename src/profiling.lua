@@ -28,6 +28,14 @@ function profiler.newGlobals()
 end
 
 
+local profiling = false
+function trace(name, fun)
+    if not profiling then
+        return fun
+    else
+        return function(...) return fun(...) end
+    end
+end
 profiler.namespaces = {
     [0] = {name="Root", title="Root", cpu=0, mem=0, value=profiler.namespaces}
 }
