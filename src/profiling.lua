@@ -6,6 +6,9 @@ profiler["Blizzard: UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
 profiler["Blizzard: UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
 profiler["Blizzard: GetFunctionCPUUsage"] = GetFunctionCPUUsage
 
+local UpdateAddOnCPUUsage = _G.UpdateAddOnCPUUsage
+local UpdateAddOnMemoryUsage = _G.UpdateAddOnMemoryUsage
+local GetFunctionCPUUsage = _G.GetFunctionCPUUsage
 
 
 local known = {}
