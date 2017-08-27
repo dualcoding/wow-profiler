@@ -250,7 +250,7 @@ function Window:update()
                 row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup))
             end
             if info.mem then
-                row.columns.ncalls.text:SetText(string.format("%6.2fmb", info.mem/1024))
+                row.columns.ncalls.text:SetText(string.format("%+6.2f kb/s", info.memdiff))
             elseif info.ncalls then
                 row.columns.ncalls.text:SetText(info.ncalls)
             else

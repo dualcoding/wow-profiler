@@ -118,7 +118,10 @@ function profiler.updateTimes(namespace, sortby)
         local x = namespace[i]
         if x.type=="addon" then
             x.cpu = GetAddOnCPUUsage(x.name)
-            x.mem = GetAddOnMemoryUsage(x.name)
+            local mem = GetAddOnMemoryUsage(x.name)
+            x.memlast = x.mem
+            x.mem = mem
+            x.memdiff = mem - x.memlast
         elseif x.type=="function" then
             x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun)
         elseif x.type=="table" then
