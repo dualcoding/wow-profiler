@@ -7,9 +7,10 @@ profiler.Blizzard["UpdateAddOnCPUUsage"] = UpdateAddOnCPUUsage
 profiler.Blizzard["UpdateAddOnMemoryUsage"] = UpdateAddOnMemoryUsage
 profiler.Blizzard["GetFunctionCPUUsage"] = GetFunctionCPUUsage
 
-local UpdateAddOnCPUUsage = _G.UpdateAddOnCPUUsage
-local UpdateAddOnMemoryUsage = _G.UpdateAddOnMemoryUsage
-local GetFunctionCPUUsage = _G.GetFunctionCPUUsage
+local cache = nil or function(f) return f end
+local UpdateAddOnCPUUsage    = cache(_G.UpdateAddOnCPUUsage)
+local UpdateAddOnMemoryUsage = cache(_G.UpdateAddOnMemoryUsage)
+local GetFunctionCPUUsage    = cache(_G.GetFunctionCPUUsage)
 
 
 function profiler.freezeStartup()

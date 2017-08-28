@@ -63,4 +63,3 @@ function profiler.registerNamespace(name, namespace, parent, seen)
         return nil
     end
 end
-hook(profiler, "registerNamespace")
