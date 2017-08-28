@@ -1,6 +1,6 @@
 -- UI code for the Profiler window
 
-local ADDON_NAME, profiler = ...
+local OUR_NAME, profiler = ...
 local ui = profiler.ui
 
 
@@ -20,6 +20,9 @@ local box       = ui.utility.box
 
 
 
+local CreateFrame = profilingcache(_G.CreateFrame)
+profiler.Blizzard.CreateFrame = _G.CreateFrame
+
 --
 -- UI
 --
@@ -32,7 +35,7 @@ local function updateTimer(self, dT)
     elapsed = elapsed + dT
     if elapsed < 1 then return
     else
-        profiler.updateTimes(ui.Window.data, Window.sortby)
+        profiler.updateTimes(ui.Window.data, Window.sortby, Window.includeSubroutines)
         ui.Window:update()
         elapsed = 0
     end
@@ -96,10 +99,34 @@ function Window:init()
         cpu:SetPoint("right")
         cpu:SetSize(size.cpu, size.header)
         cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
-        cpu.text:SetText("after")
         cpu.text:SetPoint("right", -2, 0)
+        local cpumodes = {
+            --{text="startup",       show="startup",   includeSubroutines=false},
+            --{text="startup+calls", show="startup",   includeSubroutines=true },
+            {text="updates",       show="updatecpu", includeSubroutines=false},
+            {text="updates+",      show="updatecpu", includeSubroutines=true },
+        }
+        local currentmode = 1
+        local function setmode(n)
+            local newmode = cpumodes[n]
+
+            cpu.text:SetText(newmode.text)
+            if window.sortby==cpumodes[currentmode].show then
+                window.sortby = newmode.show
+            end
+            cpu.show = newmode.show
+            window.includeSubroutines = newmode.includeSubroutines
+            currentmode = n
+        end
+        setmode(currentmode)
+        cpu:SetScript("OnMouseDown", function(self, button)
+            if button=="LeftButton" then
+                window.sortby = cpumodes[currentmode].show
+            else
+                setmode((currentmode % #cpumodes) + 1)
+            end
+        end)
         header.cpu = cpu
-        cpu:SetScript("OnMouseDown", function(...) window.sortby="cpu" end)
 
         local startup
         startup = CreateFrame("Frame", nil, header)
@@ -109,7 +136,9 @@ function Window:init()
         startup.text:SetText("startup")
         startup.text:SetPoint("right", -2, 0)
         header.startup = startup
-        startup:SetScript("OnMouseDown", function(...) window.sortby="startup" end)
+        startup:SetScript("OnMouseDown", function(self, button)
+            if button=="LeftButton" then window.sortby="startup" end
+        end)
 
         local ncalls
         ncalls = CreateFrame("Frame", nil, header)
@@ -119,7 +148,9 @@ function Window:init()
         ncalls.text:SetText("mem/ncalls")
         ncalls.text:SetPoint("right", -2, 0)
         header.ncalls = ncalls
-        ncalls:SetScript("OnMouseDown", function(...) window.sortby="ncalls" end)
+        ncalls:SetScript("OnMouseDown", function(self, button)
+            if button=="LeftButton" then window.sortby="ncalls" end
+        end)
     end
 
     local footer
@@ -199,11 +230,20 @@ function Window:init()
 
             row:SetScript("OnMouseUp", function(self, button)
                 if button=="LeftButton" then
-                    local d = window.data[self.id]
-                    window.data = type(d)~="function" and d or window.data
+                    local d = window.data[self.id] or window.data
+                    if profiler.hooks[d] then d = profiler.hooks[d] end
+                    if type(d)=="function" then
+                        window.previousdata = window.data
+                        window.data = profiler.callers[d] or window.data
+                    elseif d.type=="caller" then
+                        -- do nothing
+                    else
+                        window.data = d or window.data
+                    end
                     rows.scrolling = 0
                 elseif button=="RightButton" then
-                    window.data = window.data[-1] or window.data
+                    window.data = window.data[-1] or window.previousdata or window.data
+                    window.previousdata = nil
                     rows.scrolling = 0
                 end
                 window.titlebar.subtitle:SetText(window.data[0].name)
@@ -228,7 +268,7 @@ function Window:init()
 
     window.rows = rows
     window.data = profiler.namespaces
-    profiler.updateTimes(window.data, window.sortby)
+    profiler.updateTimes(window.data, window.sortby, window.includeSubroutines)
     window:update()
 end
 
@@ -244,13 +284,13 @@ function Window:update()
         if info then
             row.id = info.name
             row.columns.name.text:SetText(info.title)
-            row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu))
+            row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu or 0))
             if info.startup then
-                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup))
-                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup))
+                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup or 0))
+                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup or 0))
             end
             if info.mem then
-                row.columns.ncalls.text:SetText(string.format("%6.2fmb", info.mem/1024))
+                row.columns.ncalls.text:SetText(string.format("%+6.2f kb/s", info.memdiff))
             elseif info.ncalls then
                 row.columns.ncalls.text:SetText(info.ncalls)
             else
@@ -258,6 +298,9 @@ function Window:update()
             end
             if info.type=="table" then
                 row.columns.name.text:SetTextColor(0.5, 0.0, 0.0)
+                if info.subtype=="frame" then
+                    row.columns.name.text:SetTextColor(.0, .0, .5)
+                end
             elseif info.type=="addon" then
                 row.columns.name.text:SetTextColor(0.0, 0.5, 0.0)
             else

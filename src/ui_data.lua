@@ -1,6 +1,6 @@
 -- Static UI data
 
-local ADDON_NAME, profiler = ...
+local OUR_NAME, profiler = ...
 
 if not profiler.ui then
     profiler.ui = {}

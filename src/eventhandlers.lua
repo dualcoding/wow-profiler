@@ -1,5 +1,20 @@
 local OUR_NAME, profiler = ...
 
+local CreateFrame = profilingcache(_G.CreateFrame)
+
+function profiler.isFirstAddonLoaded()
+    -- Are any other addons loaded?
+    for i=1,GetNumAddOns() do
+        if IsAddOnLoaded(i) then
+            local name = GetAddOnInfo(i)
+            if not name=="!Profiler" then
+                return false, name
+            end
+        end
+    end
+    return true
+end
+
 --
 -- Load addon and handle events
 --
