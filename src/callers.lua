@@ -2,7 +2,7 @@ local OUR_NAME, profiler = ...
 
 
 profiler.callers = {}
-function cache(fun, secure)
+function profilingcache(fun, secure)
     local cached = profiler.callers[fun]
     if not cached then
         cached = {
@@ -25,9 +25,10 @@ function cache(fun, secure)
                 file, lineno, callername = s:match("Interface\\(.-).lua:(%d):.-function <(.-)>")
             end
         end
-        if not callername then callername = "unknown"
+        if not callername then --TODO: fixme
+            callername = "unknown"
             --print() print(debugstack(6, 1, 0)) print()
-        end --TODO: fixme
+        end
         local callerinfo = cached[callername]
         if not callerinfo then
             callerinfo = {name=callername, title=callername, type="caller", ncalls=0, cpu=0}
@@ -53,7 +54,7 @@ end
 
 
 profiler.hooks = {}
-function hook(t, name)
+function profiler.hook(t, name)
     local func = t[name]
     local hookfunc
     if issecurevariable(t, name) then

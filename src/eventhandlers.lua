@@ -1,5 +1,7 @@
 local OUR_NAME, profiler = ...
 
+local CreateFrame = profilingcache(_G.CreateFrame)
+
 function profiler.isFirstAddonLoaded()
     -- Are any other addons loaded?
     for i=1,GetNumAddOns() do

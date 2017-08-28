@@ -20,6 +20,9 @@ local box       = ui.utility.box
 
 
 
+local CreateFrame = profilingcache(_G.CreateFrame)
+profiler.Blizzard.CreateFrame = _G.CreateFrame
+
 --
 -- UI
 --
