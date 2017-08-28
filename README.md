@@ -8,11 +8,19 @@ Find out which addons...
 - (not yet) ~~Causes the most frequent and heaviest CPU spikes.~~
 
 ## For developers
-- Shows the total CPU used per function and times called.
-- Tries to figure out what functions belongs to which mod:
-    - Will automatically find functions in the global namespace and try to group them by addon structure.
-    - Addons can easily improve functionality by exposing local tables globally like so: `if Profiler then _G.PublicTable = privateTable end`.
-- (not yet) ~~Show further information about a function, such as who calls it and what it calls in turn.~~
+Shows the total CPU used and times called for all found functions in the global namespace and groups them by addon structure.
+
+There is not much that can be done to track locals automatically, but addon authors can easily improve functionality by exposing local tables globally like so:
+
+    if Profiler then _G.PublicTable = privateTable end
+
+
+As an experimental feature, the Profiler can try to find out callers to functions. This is currently done with plain brute force by hooking the function, throwing an error and parsing the debugstack. As you might expect this is far too heavyweight to do automatically. The recommended approach is to do the following in your source:
+
+    local cache = profilingcache or function(f) return f end
+    local CreateFrame = cache(_G.CreateFrame)
+
+There will be support for figuring out _where_ in a function the time is spent in the future that will work much like debugging prints - there is no reasonable way to do this automatically.
 
 ## Follow the development
 Each [release](https://github.com/dualcoding/wow-profiler/releases) documents what has changed since the last one.
