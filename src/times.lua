@@ -32,7 +32,7 @@ function profiler.freezeStartup()
 end
 
 
-function profiler.updateTimes(namespace, sortby)
+function profiler.updateTimes(namespace, sortby, includeSubroutines)
     if namespace==profiler.namespaces then
         UpdateAddOnCPUUsage()
         UpdateAddOnMemoryUsage()
@@ -40,7 +40,7 @@ function profiler.updateTimes(namespace, sortby)
     local totalCPU = 0
     local totalMem = 0
     if type(namespace)=="function" then
-        return GetFunctionCPUUsage(namespace)
+        return GetFunctionCPUUsage(namespace, includeSubroutines)
     end
     for i=1,#namespace do
         local x = namespace[i]
@@ -51,16 +51,17 @@ function profiler.updateTimes(namespace, sortby)
             x.mem = mem
             x.memdiff = mem - x.memlast
         elseif x.type=="function" then
-            x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun)
+            x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun, includeSubroutines)
         elseif x.type=="table" then
-            x.cpu = profiler.updateTimes(x.namespace)
+            x.cpu = profiler.updateTimes(x.namespace, sortby, includeSubroutines)
         end
+        x.updatecpu = x.cpu - (x.startup or 0)
 
         totalCPU = totalCPU + x.cpu
         totalMem = totalMem + (x.mem or 0)
     end
-    sortby = sortby or "startup"
 
+    sortby = sortby or "startup"
 
     local function sort(t, fun)
         -- Sorting tables first ended up being too much scrolling
@@ -88,8 +89,8 @@ function profiler.updateTimes(namespace, sortby)
     --elseif sortby=="mem" then
     elseif sortby=="ncalls" then
         sort(namespace, function(a,b)
-            acalls = a.ncalls or a.mem or 0
-            bcalls = b.ncalls or b.mem or 0
+            acalls = a.ncalls or a.memdiff or 0
+            bcalls = b.ncalls or b.memdiff or 0
             if acalls==bcalls then
                 return a.name<b.name
             else
@@ -107,6 +108,13 @@ function profiler.updateTimes(namespace, sortby)
             else
                 return a.startup>b.startup
             end
+        end)
+    elseif sortby=="updatecpu" then
+        sort(namespace, function(a,b)
+            if a.updatecpu == b.updatecpu then
+                return a.name<b.name
+            end
+            return a.updatecpu>b.updatecpu
         end)
     end
     return totalCPU, totalMem

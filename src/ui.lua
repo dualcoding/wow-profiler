@@ -32,7 +32,7 @@ local function updateTimer(self, dT)
     elapsed = elapsed + dT
     if elapsed < 1 then return
     else
-        profiler.updateTimes(ui.Window.data, Window.sortby)
+        profiler.updateTimes(ui.Window.data, Window.sortby, Window.includeSubroutines)
         ui.Window:update()
         elapsed = 0
     end
@@ -96,10 +96,34 @@ function Window:init()
         cpu:SetPoint("right")
         cpu:SetSize(size.cpu, size.header)
         cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
-        cpu.text:SetText("after")
         cpu.text:SetPoint("right", -2, 0)
+        local cpumodes = {
+            --{text="startup",       show="startup",   includeSubroutines=false},
+            --{text="startup+calls", show="startup",   includeSubroutines=true },
+            {text="updates",       show="updatecpu", includeSubroutines=false},
+            {text="updates+",      show="updatecpu", includeSubroutines=true },
+        }
+        local currentmode = 1
+        local function setmode(n)
+            local newmode = cpumodes[n]
+
+            cpu.text:SetText(newmode.text)
+            if window.sortby==cpumodes[currentmode].show then
+                window.sortby = newmode.show
+            end
+            cpu.show = newmode.show
+            window.includeSubroutines = newmode.includeSubroutines
+            currentmode = n
+        end
+        setmode(currentmode)
+        cpu:SetScript("OnMouseDown", function(self, button)
+            if button=="LeftButton" then
+                window.sortby = cpumodes[currentmode].show
+            else
+                setmode((currentmode % #cpumodes) + 1)
+            end
+        end)
         header.cpu = cpu
-        cpu:SetScript("OnMouseDown", function(...) window.sortby="cpu" end)
 
         local startup
         startup = CreateFrame("Frame", nil, header)
@@ -109,7 +133,9 @@ function Window:init()
         startup.text:SetText("startup")
         startup.text:SetPoint("right", -2, 0)
         header.startup = startup
-        startup:SetScript("OnMouseDown", function(...) window.sortby="startup" end)
+        startup:SetScript("OnMouseDown", function(self, button)
+            if button=="LeftButton" then window.sortby="startup" end
+        end)
 
         local ncalls
         ncalls = CreateFrame("Frame", nil, header)
@@ -119,7 +145,9 @@ function Window:init()
         ncalls.text:SetText("mem/ncalls")
         ncalls.text:SetPoint("right", -2, 0)
         header.ncalls = ncalls
-        ncalls:SetScript("OnMouseDown", function(...) window.sortby="ncalls" end)
+        ncalls:SetScript("OnMouseDown", function(self, button)
+            if button=="LeftButton" then window.sortby="ncalls" end
+        end)
     end
 
     local footer
@@ -237,7 +265,7 @@ function Window:init()
 
     window.rows = rows
     window.data = profiler.namespaces
-    profiler.updateTimes(window.data, window.sortby)
+    profiler.updateTimes(window.data, window.sortby, window.includeSubroutines)
     window:update()
 end
 
