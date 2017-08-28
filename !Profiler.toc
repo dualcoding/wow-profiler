@@ -7,8 +7,10 @@
 
 ## X-Category: Development tools
 
-src/profiling.lua
+src/callers.lua
+src/namespaces.lua
+src/times.lua
 src/ui_utility.lua
 src/ui_data.lua
 src/ui.lua
-src/addon.lua
+src/eventhandlers.lua
