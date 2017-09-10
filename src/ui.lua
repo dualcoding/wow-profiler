@@ -349,7 +349,7 @@ function Window:update()
             if info.startup then
                 local startup = window.header.startup.show=="startupp" and info.startupp or info.startup
                 row.columns.startup.text:SetText(string.format("%6.0fms", startup))
-                local grad = math.max(1.0-info.startup/1000, 0.0)
+                local grad = math.max(1.0-startup/1000, 0.0)
                 row.columns.startup.texture:SetVertexColor(1.0, grad, grad)
             end
 
