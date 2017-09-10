@@ -66,7 +66,28 @@ function Window:init()
 
         -- handlers
         titlebar:SetScript("OnMouseDown", function(self, button)
-            if button=="LeftButton" then window:StartMoving() end
+            if button=="LeftButton" then window:StartMoving()
+            else
+                if not window.minimized then
+                    window.header:Hide()
+                    window.workspace:Hide()
+                    window.footer:Hide()
+                    window.borderright:SetVertexColor(1, 1, 1, 0)
+                    window.bordertop:SetVertexColor(1, 1, 1, 0)
+                    window.borderbottom:SetVertexColor(1, 1, 1, 0)
+                    window.borderleft:SetVertexColor(1, 1, 1, 0)
+                    window.minimized = true
+                else
+                    window.header:Show()
+                    window.workspace:Show()
+                    window.footer:Show()
+                    window.borderright:SetVertexColor(1, 1, 1, 1)
+                    window.bordertop:SetVertexColor(1, 1, 1, 1)
+                    window.borderbottom:SetVertexColor(1, 1, 1, 1)
+                    window.borderleft:SetVertexColor(1, 1, 1, 1)
+                    window.minimized = false
+                end
+            end
         end)
         titlebar:SetScript("OnMouseUp", function(self, button)
             if button=="LeftButton" then window:StopMovingOrSizing() end
