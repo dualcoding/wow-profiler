@@ -1,0 +1,9 @@
+package-as: !Stragglers
+enable-nolib-creation: no
+
+license-output: LICENSE
+
+ignore:
+    - README.md
+    - LICENSE
+    - CHANGELOG.md
