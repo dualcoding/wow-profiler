@@ -26,6 +26,7 @@ function profiler.freezeStartup()
         for i=1,#ns do
             local x = ns[i]
             x.startup = x.cpu
+            x.startupp = x.cpup
             stack[#stack+1] = x.namespace
         end
         ns = table.remove(stack)
@@ -33,15 +34,18 @@ function profiler.freezeStartup()
 end
 
 
-function profiler.updateTimes(namespace, sortby, includeSubroutines)
+function profiler.updateTimes(namespace, sortby)
     if namespace==profiler.namespaces then
         UpdateAddOnCPUUsage()
         UpdateAddOnMemoryUsage()
     end
     local totalCPU = 0
+    local totalCPUp = 0
     local totalMem = 0
     if type(namespace)=="function" then
-        return GetFunctionCPUUsage(namespace, includeSubroutines)
+        local cpu, ncalls = GetFunctionCPUUsage(namespace, false)
+        local cpup = GetFunctionCPUUsage(namespace, true)
+        return cpu, cpup
     end
     for i=1,#namespace do
         local x = namespace[i]
@@ -49,77 +53,35 @@ function profiler.updateTimes(namespace, sortby, includeSubroutines)
             x.cpu = GetAddOnCPUUsage(x.name)
             local mem = GetAddOnMemoryUsage(x.name)
             local now = debugprofilestop()
-            local dt = now - (x.memlasttime or 0)
+            local dt = now - (x.updated or 0)
             x.memlast = x.mem
             x.mem = mem
             x.memdiff = (mem - x.memlast)/(dt/1000)
-            x.memlasttime = now
         elseif x.type=="function" then
-            x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun, includeSubroutines)
+            x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun, false)
+            x.cpup = GetFunctionCPUUsage(x.fun, true)
         elseif x.type=="table" then
-            x.cpu = profiler.updateTimes(x.namespace, sortby, includeSubroutines)
+            x.cpu, x.cpup = profiler.updateTimes(x.namespace, sortby)
         end
+        x.updated = debugprofilestop()
         x.updatecpu = x.cpu - (x.startup or 0)
+        x.updatecpup = (x.cpup or x.cpu) - (x.startupp or x.startup or 0)
 
         totalCPU = totalCPU + x.cpu
+        totalCPUp = totalCPUp + (x.cpup or x.cpu)
         totalMem = totalMem + (x.mem or 0)
     end
 
     sortby = sortby or "startup"
 
-    local function sort(t, fun)
-        -- Sorting tables first ended up being too much scrolling
-        --return table.sort(t, function(a,b)
-        --    if     a.type=="table" and b.type~="table" then return true
-        --    elseif a.type~="table" and b.type=="table" then return false
-        --    end
-        --    return fun(a,b)
-        --end)
-        return table.sort(t, fun)
-    end
-
-    if sortby=="cpu" then
-        sort(namespace, function(a,b)
-            if a.cpu==b.cpu then
-                return a.name<b.name
-            else
-                return a.cpu>b.cpu
-            end
-        end)
-    elseif sortby=="name" then
-        sort(namespace, function(a,b)
+    table.sort(namespace, function(a,b)
+        if a[sortby]==b[sortby] then
             return a.name<b.name
-        end)
-    --elseif sortby=="mem" then
-    elseif sortby=="ncalls" then
-        sort(namespace, function(a,b)
-            acalls = a.ncalls or a.memdiff or 0
-            bcalls = b.ncalls or b.memdiff or 0
-            if acalls==bcalls then
-                return a.name<b.name
-            else
-                return acalls>bcalls
-            end
-        end)
-    elseif sortby=="startup" then
-        sort(namespace, function(a,b)
-            a.startup = a.startup or 0
-            b.startup = b.startup or 0
-            if a.startup==b.startup then
-                if a.name and b.name then
-                    return a.name<b.name
-                end
-            else
-                return a.startup>b.startup
-            end
-        end)
-    elseif sortby=="updatecpu" then
-        sort(namespace, function(a,b)
-            if a.updatecpu == b.updatecpu then
-                return a.name<b.name
-            end
-            return a.updatecpu>b.updatecpu
-        end)
-    end
-    return totalCPU, totalMem
+        else
+            if sortby=="name" then return a.name<b.name end
+            return (a[sortby] or 0) > (b[sortby] or 0)
+        end
+    end)
+
+    return totalCPU, totalCPUp, totalMem
 end

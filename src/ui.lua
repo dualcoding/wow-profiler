@@ -101,10 +101,10 @@ function Window:init()
         cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
         cpu.text:SetPoint("right", -2, 0)
         local cpumodes = {
-            --{text="startup",       show="startup",   includeSubroutines=false},
-            --{text="startup+calls", show="startup",   includeSubroutines=true },
-            {text="updates",       show="updatecpu", includeSubroutines=false},
-            {text="updates+",      show="updatecpu", includeSubroutines=true },
+            {text="updates",    show="updatecpu",     includeSubroutines=false},
+            {text="updates+",   show="updatecpup",    includeSubroutines=true },
+            {text="updates/s",  show="updatecpu_dt",  includeSubroutines=false},
+            {text="update+/s",  show="updatecpup_dt", includeSubroutines=true },
         }
         local currentmode = 1
         local function setmode(n)
@@ -133,12 +133,32 @@ function Window:init()
         startup:SetPoint("right", header.cpu, "left")
         startup:SetSize(size.startup, size.header)
         startup.text = startup:CreateFontString(nil, "MEDIUM", fonts.text)
-        startup.text:SetText("startup")
         startup.text:SetPoint("right", -2, 0)
-        header.startup = startup
+        local startupmodes = {
+            {text="startup",       show="startup",       includeSubroutines=false},
+            {text="startup+",      show="startupp",      includeSubroutines=true },
+        }
+        local currentmode = 1
+        local function setmode(n)
+            local newmode = startupmodes[n]
+
+            startup.text:SetText(newmode.text)
+            if window.sortby==startupmodes[currentmode].show then
+                window.sortby = newmode.show
+            end
+            startup.show = newmode.show
+            window.includeSubroutines = newmode.includeSubroutines
+            currentmode = n
+        end
+        setmode(currentmode)
         startup:SetScript("OnMouseDown", function(self, button)
-            if button=="LeftButton" then window.sortby="startup" end
+            if button=="LeftButton" then
+                window.sortby = startupmodes[currentmode].show
+            else
+                setmode((currentmode % #startupmodes) + 1)
+            end
         end)
+        header.startup = startup
 
         local ncalls
         ncalls = CreateFrame("Frame", nil, header)
@@ -149,7 +169,13 @@ function Window:init()
         ncalls.text:SetPoint("right", -2, 0)
         header.ncalls = ncalls
         ncalls:SetScript("OnMouseDown", function(self, button)
-            if button=="LeftButton" then window.sortby="ncalls" end
+            if button=="LeftButton" then
+                if window.data==profiler.namespaces then
+                    window.sortby="memdiff"
+                else
+                    window.sortby="ncalls"
+                end
+            end
         end)
     end
     window.header = header
@@ -289,15 +315,17 @@ function Window:update()
         local row = rows[i]
         local info = data[i+scrolling]
         if info then
+            -- We have a row that contains data, fill out columns depending on what is available:
             row.id = info.name
-            row.columns.name.text:SetText(info.title)
-            row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu or 0))
+            row.columns.name.text:SetText(info.title or info.name)
+
             if info.startup then
-                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup or 0))
-                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup or 0))
+                local startup = window.header.startup.show=="startupp" and info.startupp or info.startup
+                row.columns.startup.text:SetText(string.format("%6.0fms", startup))
                 local grad = math.max(1.0-info.startup/1000, 0.0)
                 row.columns.startup.texture:SetVertexColor(1.0, grad, grad)
             end
+
             if info.mem then
                 row.columns.ncalls.text:SetText(string.format("%+6.2f kb/s", info.memdiff))
             elseif info.ncalls then
@@ -305,6 +333,24 @@ function Window:update()
             else
                 row.columns.ncalls.text:SetText("")
             end
+
+            if info.cpu then
+                if window.header.cpu.show=="updatecpu_dt" or window.header.cpu.show=="updatecpup_dt" then
+                    local now = debugprofilestop()
+                    --local last = info.updated or now
+                    --local dt = now - last
+                    local cpu = window.header.cpu.show=="updatecpu_dt" and info.updatecpu or info.updatecpup
+                    row.columns.cpu.text:SetText(string.format("%2.4f", cpu/now))
+                elseif window.header.cpu.show=="updatecpu" then
+                    row.columns.cpu.text:SetText(string.format("%6.0fms", info.updatecpu or 0))
+                elseif window.header.cpu.show=="updatecpup" then
+                    row.columns.cpu.text:SetText(string.format("%6.0fms", info.updatecpup or 0))
+                else
+                    error("unknown mode for column cpu: "..window.header.cpu.show)
+                end
+            end
+
+            -- Color text by type:
             if info.type=="table" then
                 row.columns.name.text:SetTextColor(0.5, 0.0, 0.0)
                 if info.subtype=="frame" then
@@ -315,8 +361,9 @@ function Window:update()
             else
                 row.columns.name.text:SetTextColor(0.0, 0.0, 0.0)
             end
+
         else
-            -- The row has no data to show
+            -- The row has no data to show, clear it:
             row.id = nil
             for name,f in pairs(row.columns) do
                 -- clear all texts

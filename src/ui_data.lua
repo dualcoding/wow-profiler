@@ -41,7 +41,7 @@ ui.data.size = {
     header = 20,
     footer = 20,
     row = 15,
-    cpu = 60,
+    cpu = 70,
     ncalls = 60,
     startup = 60,
 }
