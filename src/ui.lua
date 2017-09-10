@@ -47,6 +47,7 @@ function Window:init()
     window:SetSize(unpack(size.window)); window:SetPoint("center");
     bgcolor(window, colors.window, colors.windowborder)
     window:SetMovable(true)
+    window:SetResizable(true)
 
     local titlebar
     titlebar = box(window, colors.titlebar)
@@ -215,16 +216,42 @@ function Window:init()
     bgcolor(footer, colors.footer)
     window.footer = footer
 
+    local draghandle
+    draghandle = CreateFrame("Frame", nil, footer)
+    draghandle:SetSize(10, 10)
+    draghandle:SetPoint("bottomright")
+    bgcolor(draghandle, {1, 1, 1, 1})
+    draghandle:SetScript("OnMouseDown", function(self, button)
+        window:StartSizing()
+    end)
+    draghandle:SetScript("OnMouseUp", function(self, button)
+        window:StopMovingOrSizing()
+    end)
+
+    local scrollspace
+    scrollspace = CreateFrame("ScrollFrame", nil, window)
+    scrollspace:SetPoint("topleft", header, "bottomleft")
+    scrollspace:SetPoint("bottomright", footer, "topright")
+    bgcolor(scrollspace, {.5, .0, .0, 1})
+    window.scrollspace = scrollspace
+
     local workspace
-    workspace = CreateFrame("Frame", nil, window)
-    workspace:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
-    workspace:SetPoint("BOTTOMRIGHT", footer, "TOPRIGHT")
+    workspace = CreateFrame("Frame", nil, scrollspace)
+    --workspace:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
+    --workspace:SetPoint("BOTTOMRIGHT", footer, "TOPRIGHT")
+    workspace:SetPoint("topleft")
+    workspace:SetPoint("topright")
+    workspace:SetHeight(700)
+    workspace:SetWidth(400)
     bgcolor(workspace, colors.workspace)
     window.workspace = workspace
+
+    scrollspace:SetScrollChild(workspace)
 
     local rows = {}
     do
         local maxRows = math.floor(workspace:GetHeight()/size.row)
+        print (maxRows)
         for i=1, maxRows do
             local offset = (i-1)*size.row
 
