@@ -48,9 +48,12 @@ function profiler.updateTimes(namespace, sortby, includeSubroutines)
         if x.type=="addon" then
             x.cpu = GetAddOnCPUUsage(x.name)
             local mem = GetAddOnMemoryUsage(x.name)
+            local now = debugprofilestop()
+            local dt = now - (x.memlasttime or 0)
             x.memlast = x.mem
             x.mem = mem
-            x.memdiff = mem - x.memlast
+            x.memdiff = (mem - x.memlast)/(dt/1000)
+            x.memlasttime = now
         elseif x.type=="function" then
             x.cpu, x.ncalls = GetFunctionCPUUsage(x.fun, includeSubroutines)
         elseif x.type=="table" then
