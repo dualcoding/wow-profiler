@@ -15,7 +15,7 @@ end
 
 ui.data.colors = {
     --               R       G      B      A
-    window       = {1.00,  0.00,  0.00,  1.00},
+    window       = {1.00,  0.00,  0.00,  0.00},
     windowborder = {0.00,  0.00,  0.00,  1.00},
     titlebar     = {0.05,  0.05,  0.05,  1.00},
     header       = {0.80,  0.80,  0.80,  1.00},
@@ -36,12 +36,12 @@ ui.data.fonts = {
 }
 
 ui.data.size = {
-    window = {400, 200},
+    window = {400, 500},
     titlebar = 20,
     header = 20,
     footer = 20,
     row = 15,
-    cpu = 60,
+    cpu = 70,
     ncalls = 60,
     startup = 60,
 }

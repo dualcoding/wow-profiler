@@ -20,7 +20,7 @@ local box       = ui.utility.box
 
 
 
-local CreateFrame = profilingcache(_G.CreateFrame)
+local CreateFrame = profilingmonitor(_G.CreateFrame)
 profiler.Blizzard.CreateFrame = _G.CreateFrame
 
 --
@@ -58,6 +58,12 @@ function Window:init()
         title = titlebar:CreateFontString(nil, "medium", fonts.title)
         title:SetPoint("left", 2, 0)
         title:SetText("Profiler")
+        do
+            local scriptProfile = GetCVar("scriptProfile")
+            if scriptProfile~="1" then
+                title:SetText("!!! You must set CVar 'scriptProfile' to 1 before profiling will work !!!")
+            end
+        end
 
         local subtitle
         subtitle = titlebar:CreateFontString(nil, "medium", fonts.subtitle)
@@ -66,7 +72,28 @@ function Window:init()
 
         -- handlers
         titlebar:SetScript("OnMouseDown", function(self, button)
-            if button=="LeftButton" then window:StartMoving() end
+            if button=="LeftButton" then window:StartMoving()
+            else
+                if not window.minimized then
+                    window.header:Hide()
+                    window.workspace:Hide()
+                    window.footer:Hide()
+                    window.borderright:SetVertexColor(1, 1, 1, 0)
+                    window.bordertop:SetVertexColor(1, 1, 1, 0)
+                    window.borderbottom:SetVertexColor(1, 1, 1, 0)
+                    window.borderleft:SetVertexColor(1, 1, 1, 0)
+                    window.minimized = true
+                else
+                    window.header:Show()
+                    window.workspace:Show()
+                    window.footer:Show()
+                    window.borderright:SetVertexColor(1, 1, 1, 1)
+                    window.bordertop:SetVertexColor(1, 1, 1, 1)
+                    window.borderbottom:SetVertexColor(1, 1, 1, 1)
+                    window.borderleft:SetVertexColor(1, 1, 1, 1)
+                    window.minimized = false
+                end
+            end
         end)
         titlebar:SetScript("OnMouseUp", function(self, button)
             if button=="LeftButton" then window:StopMovingOrSizing() end
@@ -101,10 +128,10 @@ function Window:init()
         cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
         cpu.text:SetPoint("right", -2, 0)
         local cpumodes = {
-            --{text="startup",       show="startup",   includeSubroutines=false},
-            --{text="startup+calls", show="startup",   includeSubroutines=true },
-            {text="updates",       show="updatecpu", includeSubroutines=false},
-            {text="updates+",      show="updatecpu", includeSubroutines=true },
+            {text="updates",    show="updatecpu",      includeSubroutines=false},
+            {text="updates+",   show="updatecpup",     includeSubroutines=true },
+            {text="updates/s",  show="updatecpudiff",  includeSubroutines=false},
+            {text="update+/s",  show="updatecpupdiff", includeSubroutines=true },
         }
         local currentmode = 1
         local function setmode(n)
@@ -133,25 +160,52 @@ function Window:init()
         startup:SetPoint("right", header.cpu, "left")
         startup:SetSize(size.startup, size.header)
         startup.text = startup:CreateFontString(nil, "MEDIUM", fonts.text)
-        startup.text:SetText("startup")
         startup.text:SetPoint("right", -2, 0)
-        header.startup = startup
+        local startupmodes = {
+            {text="startup",       show="startup",       includeSubroutines=false},
+            {text="startup+",      show="startupp",      includeSubroutines=true },
+        }
+        local currentmode = 1
+        local function setmode(n)
+            local newmode = startupmodes[n]
+
+            startup.text:SetText(newmode.text)
+            if window.sortby==startupmodes[currentmode].show then
+                window.sortby = newmode.show
+            end
+            startup.show = newmode.show
+            window.includeSubroutines = newmode.includeSubroutines
+            currentmode = n
+        end
+        setmode(currentmode)
         startup:SetScript("OnMouseDown", function(self, button)
-            if button=="LeftButton" then window.sortby="startup" end
+            if button=="LeftButton" then
+                window.sortby = startupmodes[currentmode].show
+            else
+                setmode((currentmode % #startupmodes) + 1)
+            end
         end)
+        header.startup = startup
 
         local ncalls
         ncalls = CreateFrame("Frame", nil, header)
         ncalls:SetPoint("right", header.startup, "left")
         ncalls:SetSize(size.ncalls, size.header)
         ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.text)
-        ncalls.text:SetText("mem/ncalls")
+        ncalls.text:SetText("mem/s")
         ncalls.text:SetPoint("right", -2, 0)
         header.ncalls = ncalls
         ncalls:SetScript("OnMouseDown", function(self, button)
-            if button=="LeftButton" then window.sortby="ncalls" end
+            if button=="LeftButton" then
+                if window.data==profiler.namespaces then
+                    window.sortby="memdiff"
+                else
+                    window.sortby="ncalls"
+                end
+            end
         end)
     end
+    window.header = header
 
     local footer
     footer = CreateFrame("Frame", nil, window)
@@ -159,12 +213,14 @@ function Window:init()
     footer:SetPoint("bottomleft")
     footer:SetPoint("bottomright")
     bgcolor(footer, colors.footer)
+    window.footer = footer
 
     local workspace
     workspace = CreateFrame("Frame", nil, window)
     workspace:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
     workspace:SetPoint("BOTTOMRIGHT", footer, "TOPRIGHT")
     bgcolor(workspace, colors.workspace)
+    window.workspace = workspace
 
     local rows = {}
     do
@@ -278,17 +334,25 @@ function Window:update()
     local scrolling = rows.scrolling
     local data = window.data
 
+    if data==profiler.namespaces then window.header.ncalls.text:SetText("mem/s")
+    else                              window.header.ncalls.text:SetText("ncalls")
+    end
+
     for i=1,#rows do
         local row = rows[i]
         local info = data[i+scrolling]
         if info then
+            -- We have a row that contains data, fill out columns depending on what is available:
             row.id = info.name
-            row.columns.name.text:SetText(info.title)
-            row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu or 0))
+            row.columns.name.text:SetText(info.title or info.name)
+
             if info.startup then
-                row.columns.startup.text:SetText(string.format("%6.0fms", info.startup or 0))
-                row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup or 0))
+                local startup = window.header.startup.show=="startupp" and info.startupp or info.startup
+                row.columns.startup.text:SetText(string.format("%6.0fms", startup))
+                local grad = math.max(1.0-info.startup/1000, 0.0)
+                row.columns.startup.texture:SetVertexColor(1.0, grad, grad)
             end
+
             if info.mem then
                 row.columns.ncalls.text:SetText(string.format("%+6.2f kb/s", info.memdiff))
             elseif info.ncalls then
@@ -296,6 +360,21 @@ function Window:update()
             else
                 row.columns.ncalls.text:SetText("")
             end
+
+            if info.cpu then
+                if window.header.cpu.show=="updatecpudiff" or window.header.cpu.show=="updatecpupdiff" then
+                    local cpudiff = window.header.cpu.show=="updatecpudiff" and info.updatecpudiff or info.updatecpupdiff
+                    row.columns.cpu.text:SetText(string.format("%2.4fµs", cpudiff*1000))
+                elseif window.header.cpu.show=="updatecpu" then
+                    row.columns.cpu.text:SetText(string.format("%6.0fms", info.updatecpu or 0))
+                elseif window.header.cpu.show=="updatecpup" then
+                    row.columns.cpu.text:SetText(string.format("%6.0fms", info.updatecpup or 0))
+                else
+                    error("unknown mode for column cpu: "..window.header.cpu.show)
+                end
+            end
+
+            -- Color text by type:
             if info.type=="table" then
                 row.columns.name.text:SetTextColor(0.5, 0.0, 0.0)
                 if info.subtype=="frame" then
@@ -306,12 +385,14 @@ function Window:update()
             else
                 row.columns.name.text:SetTextColor(0.0, 0.0, 0.0)
             end
+
         else
-            -- The row has no data to show
+            -- The row has no data to show, clear it:
             row.id = nil
             for name,f in pairs(row.columns) do
                 -- clear all texts
                 f.text:SetText("")
+                f.texture:SetVertexColor(unpack(colors.rowbg))
             end
         end
     end

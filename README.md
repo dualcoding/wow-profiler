@@ -5,7 +5,6 @@ A profiler for WoW addons that tries to go deeper.
 Find out which addons...
 - Are increasing your startup times the most.
 - Have the heaviest CPU-cost while the game is running.
-- (not yet) ~~Causes the most frequent and heaviest CPU spikes.~~
 
 ## For developers
 Shows the total CPU used and times called for all found functions in the global namespace and groups them by addon structure.
@@ -17,7 +16,7 @@ There is not much that can be done to track locals automatically, but addon auth
 
 As an experimental feature, the Profiler can try to find out callers to functions. This is currently done with plain brute force by hooking the function, throwing an error and parsing the debugstack. As you might expect this is far too heavyweight to do automatically. The recommended approach is to do the following in your source:
 
-    local cache = profilingcache or function(f) return f end
+    local cache = profilingmonitor or function(f) return f end
     local CreateFrame = cache(_G.CreateFrame)
 
 There will be support for figuring out _where_ in a function the time is spent in the future that will work much like debugging prints - there is no reasonable way to do this automatically.

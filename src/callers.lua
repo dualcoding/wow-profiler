@@ -2,7 +2,7 @@ local OUR_NAME, profiler = ...
 
 
 profiler.callers = {}
-function profilingcache(fun, secure)
+function profilingmonitor(fun, secure)
     local cached = profiler.callers[fun]
     if not cached then
         cached = {
@@ -58,10 +58,10 @@ function profiler.hook(t, name)
     local func = t[name]
     local hookfunc
     if issecurevariable(t, name) then
-        hookfunc = cache(func, true)
+        hookfunc = profilingmonitor(func, true)
         hooksecurefunc(t, name, hookfunc)
     else
-        hookfunc = cache(func)
+        hookfunc = profilingmonitor(func)
         t[name] = hookfunc
     end
     profiler.hooks[hookfunc] = func

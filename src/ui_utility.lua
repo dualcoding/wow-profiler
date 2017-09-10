@@ -21,24 +21,28 @@ function ui.utility.edgecolor(frame, color)
     left:SetPoint("bottomleft", -1, -1)
     left:SetWidth(1)
     left:SetColorTexture(unpack(color))
+    frame.borderleft = left
 
     local top = frame:CreateTexture(nil)
     top:SetPoint("topleft", -1, 1)
     top:SetPoint("topright", 1, 1)
     top:SetHeight(1)
     top:SetColorTexture(unpack(color))
+    frame.bordertop = top
 
     local right = frame:CreateTexture(nil)
     right:SetPoint("topright", 1, 1)
     right:SetPoint("bottomright", 1, -1)
     right:SetWidth(1)
     right:SetColorTexture(unpack(color))
+    frame.borderright = right
 
     local bottom = frame:CreateTexture(nil)
     bottom:SetPoint("bottomleft",  -1, -1)
     bottom:SetPoint("bottomright",  1, -1)
     bottom:SetHeight(1)
     bottom:SetColorTexture(unpack(color))
+    frame.borderbottom = bottom
 end
 local edgecolor = ui.utility.edgecolor
 
@@ -46,6 +50,7 @@ function ui.utility.bgcolor(frame, bg, edge)
     local texture = frame:CreateTexture(nil, "MEDIUM")
     texture:SetAllPoints(true)
     texture:SetColorTexture(unpack(bg))
+    frame.texture = texture
     if edge then edgecolor(frame, edge) end
     return texture
 end
