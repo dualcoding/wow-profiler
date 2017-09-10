@@ -295,6 +295,8 @@ function Window:update()
             if info.startup then
                 row.columns.startup.text:SetText(string.format("%6.0fms", info.startup or 0))
                 row.columns.cpu.text:SetText(string.format("%6.0fms", info.cpu - info.startup or 0))
+                local grad = math.max(1.0-info.startup/1000, 0.0)
+                row.columns.startup.texture:SetVertexColor(1.0, grad, grad)
             end
             if info.mem then
                 row.columns.ncalls.text:SetText(string.format("%+6.2f kb/s", info.memdiff))
@@ -319,6 +321,7 @@ function Window:update()
             for name,f in pairs(row.columns) do
                 -- clear all texts
                 f.text:SetText("")
+                f.texture:SetVertexColor(unpack(colors.rowbg))
             end
         end
     end
