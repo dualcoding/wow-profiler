@@ -145,13 +145,14 @@ function Window:init()
         ncalls:SetPoint("right", header.startup, "left")
         ncalls:SetSize(size.ncalls, size.header)
         ncalls.text = ncalls:CreateFontString(nil, "MEDIUM", fonts.text)
-        ncalls.text:SetText("mem/ncalls")
+        ncalls.text:SetText("mem/s")
         ncalls.text:SetPoint("right", -2, 0)
         header.ncalls = ncalls
         ncalls:SetScript("OnMouseDown", function(self, button)
             if button=="LeftButton" then window.sortby="ncalls" end
         end)
     end
+    window.header = header
 
     local footer
     footer = CreateFrame("Frame", nil, window)
@@ -159,12 +160,14 @@ function Window:init()
     footer:SetPoint("bottomleft")
     footer:SetPoint("bottomright")
     bgcolor(footer, colors.footer)
+    window.footer = footer
 
     local workspace
     workspace = CreateFrame("Frame", nil, window)
     workspace:SetPoint("TOPLEFT", header, "BOTTOMLEFT")
     workspace:SetPoint("BOTTOMRIGHT", footer, "TOPRIGHT")
     bgcolor(workspace, colors.workspace)
+    window.workspace = workspace
 
     local rows = {}
     do
@@ -277,6 +280,10 @@ function Window:update()
     local rows = window.rows
     local scrolling = rows.scrolling
     local data = window.data
+
+    if data==profiler.namespaces then window.header.ncalls.text:SetText("mem/s")
+    else                              window.header.ncalls.text:SetText("ncalls")
+    end
 
     for i=1,#rows do
         local row = rows[i]
