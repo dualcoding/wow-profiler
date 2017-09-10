@@ -1,9 +1,9 @@
 ## Interface: 70300
-## Title: !Profiler
+## Title: !Stragglers
 ## Notes: Find out what addons are slowing you down.
 ## Author: dualcoding
 
-#SavedVariables: ProfilerDB
+#SavedVariables: StragglersDB
 
 ## X-Category: Development tools
 
