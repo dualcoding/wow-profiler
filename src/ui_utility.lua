@@ -47,6 +47,7 @@ function ui.utility.bgcolor(frame, bg, edge)
     texture:SetAllPoints(true)
     texture:SetColorTexture(unpack(bg))
     if edge then edgecolor(frame, edge) end
+    frame.texture = texture
     return texture
 end
 local bgcolor = ui.utility.bgcolor
