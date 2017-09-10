@@ -20,7 +20,7 @@ local box       = ui.utility.box
 
 
 
-local CreateFrame = profilingcache(_G.CreateFrame)
+local CreateFrame = profilingmonitor(_G.CreateFrame)
 profiler.Blizzard.CreateFrame = _G.CreateFrame
 
 --
@@ -58,6 +58,12 @@ function Window:init()
         title = titlebar:CreateFontString(nil, "medium", fonts.title)
         title:SetPoint("left", 2, 0)
         title:SetText("Profiler")
+        do
+            local scriptProfile = GetCVar("scriptProfile")
+            if scriptProfile~="1" then
+                title:SetText("!!! You must set CVar 'scriptProfile' to 1 before profiling will work !!!")
+            end
+        end
 
         local subtitle
         subtitle = titlebar:CreateFontString(nil, "medium", fonts.subtitle)

@@ -1,6 +1,6 @@
 local OUR_NAME, profiler = ...
 
-local CreateFrame = profilingcache(_G.CreateFrame)
+local CreateFrame = profilingmonitor(_G.CreateFrame)
 
 function profiler.isFirstAddonLoaded()
     -- Are any other addons loaded?
@@ -26,7 +26,7 @@ profiler.events = {
         if addon_name==OUR_NAME then
             -- We were loaded
             if not profiler.isFirstAddonLoaded() then
-                error(OUR_NAME, "was not loaded first")
+                error(OUR_NAME.." was not loaded first, this will likely lead to attributing functions to the wrong addons.")
             end
 
             -- Start listening for new globals
