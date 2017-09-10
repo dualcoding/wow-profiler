@@ -128,10 +128,10 @@ function Window:init()
         cpu.text = cpu:CreateFontString(nil, "MEDIUM", fonts.text)
         cpu.text:SetPoint("right", -2, 0)
         local cpumodes = {
-            {text="updates",    show="updatecpu",     includeSubroutines=false},
-            {text="updates+",   show="updatecpup",    includeSubroutines=true },
-            {text="updates/s",  show="updatecpu_dt",  includeSubroutines=false},
-            {text="update+/s",  show="updatecpup_dt", includeSubroutines=true },
+            {text="updates",    show="updatecpu",      includeSubroutines=false},
+            {text="updates+",   show="updatecpup",     includeSubroutines=true },
+            {text="updates/s",  show="updatecpudiff",  includeSubroutines=false},
+            {text="update+/s",  show="updatecpupdiff", includeSubroutines=true },
         }
         local currentmode = 1
         local function setmode(n)
@@ -362,12 +362,9 @@ function Window:update()
             end
 
             if info.cpu then
-                if window.header.cpu.show=="updatecpu_dt" or window.header.cpu.show=="updatecpup_dt" then
-                    local now = debugprofilestop()
-                    --local last = info.updated or now
-                    --local dt = now - last
-                    local cpu = window.header.cpu.show=="updatecpu_dt" and info.updatecpu or info.updatecpup
-                    row.columns.cpu.text:SetText(string.format("%2.4f", cpu/now))
+                if window.header.cpu.show=="updatecpudiff" or window.header.cpu.show=="updatecpupdiff" then
+                    local cpudiff = window.header.cpu.show=="updatecpudiff" and info.updatecpudiff or info.updatecpupdiff
+                    row.columns.cpu.text:SetText(string.format("%2.4fµs", cpudiff*1000))
                 elseif window.header.cpu.show=="updatecpu" then
                     row.columns.cpu.text:SetText(string.format("%6.0fms", info.updatecpu or 0))
                 elseif window.header.cpu.show=="updatecpup" then

@@ -63,9 +63,14 @@ function profiler.updateTimes(namespace, sortby)
         elseif x.type=="table" then
             x.cpu, x.cpup = profiler.updateTimes(x.namespace, sortby)
         end
+        local oldtime = x.updated or debugprofilestop()
+        local oldupdatecpu = x.updatecpu or 0
+        local oldupdatecpup = x.updatecpup or 0
         x.updated = debugprofilestop()
         x.updatecpu = x.cpu - (x.startup or 0)
         x.updatecpup = (x.cpup or x.cpu) - (x.startupp or x.startup or 0)
+        x.updatecpudiff = (x.updatecpu - oldupdatecpu)/(x.updated-oldtime)
+        x.updatecpupdiff = (x.updatecpup - oldupdatecpup)/(x.updated-oldtime)
 
         totalCPU = totalCPU + x.cpu
         totalCPUp = totalCPUp + (x.cpup or x.cpu)
