@@ -36,7 +36,7 @@ ui.data.fonts = {
 }
 
 ui.data.size = {
-    window = {400, 200},
+    window = {400, 500},
     titlebar = 20,
     header = 20,
     footer = 20,
